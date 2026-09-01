@@ -47,7 +47,7 @@ export async function handleTestImages(request: Request, env: ImageEnv): Promise
     }
 
     const recipePrompt = buildRecipePrompt(recipe);
-    const fullPrompt = buildFullPrompt(recipePrompt);
+    const fullPrompt = buildFullPrompt(recipePrompt, slug);
 
     for (const model of models) {
       const modelShortName = model.split('/').pop();

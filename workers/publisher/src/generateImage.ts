@@ -48,7 +48,7 @@ async function generateAndStoreImage(
     .bind(recipeSpecificPrompt, row.id)
     .run();
 
-  const result = await runImageGeneration(env, buildFullPrompt(recipeSpecificPrompt), key);
+  const result = await runImageGeneration(env, buildFullPrompt(recipeSpecificPrompt, row.slug), key);
 
   if (!result.ok) {
     await env.DB.prepare(`UPDATE ${table} SET image_status = 'fejlet' WHERE id = ?`).bind(row.id).run();
@@ -109,7 +109,7 @@ export async function ensureArticleBodyImages(
     const key = `articles/${article.slug}/${marker}.png`;
     await env.DB.prepare(`UPDATE article_images SET image_status = 'under_generering' WHERE id = ?`).bind(row.id).run();
 
-    const result = await runImageGeneration(env, buildFullPrompt(prompt.trim()), key);
+    const result = await runImageGeneration(env, buildFullPrompt(prompt.trim(), `${article.slug}-${marker}`), key);
 
     if (!result.ok) {
       await env.DB.prepare(`UPDATE article_images SET image_status = 'fejlet' WHERE id = ?`).bind(row.id).run();
