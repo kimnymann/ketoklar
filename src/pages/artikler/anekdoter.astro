@@ -1,0 +1,30 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import type { Article } from '../../lib/db';
+
+import { env } from "cloudflare:workers";
+const db = env.DB;
+
+const { results: anecdotes } = await db
+  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND category = 'anekdote' ORDER BY published_at DESC`)
+  .all<Article>();
+---
+
+<Layout title="Anekdoter">
+  <h1 class="text-3xl font-bold mb-6">Anekdoter</h1>
+  <p class="text-stone-600 mb-8">Historier om folk på keto, og hvorfor vi er ligeglade med, hvad andre tænker.</p>
+
+  <div class="grid sm:grid-cols-2 gap-6">
+    {anecdotes.map((a) => (
+      <a href={`/artikler/${a.slug}`} class="block bg-white rounded-2xl border border-stone-200 p-6 hover:shadow-md transition relative">
+        {a.locked === 1 && (
+          <span class="absolute top-4 right-4 text-xs bg-stone-900 text-white px-2 py-1 rounded-full">Kun abonnenter</span>
+        )}
+        <h2 class="text-lg font-bold">{a.title}</h2>
+        <p class="text-sm text-stone-500 mt-2">{a.excerpt}</p>
+      </a>
+    ))}
+  </div>
+
+  {anecdotes.length === 0 && <p class="text-stone-500">Ingen anekdoter endnu.</p>}
+</Layout>

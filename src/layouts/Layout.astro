@@ -1,0 +1,38 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Ketoklar, dit univers af keto opskrifter, artikler og anekdoter.' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title} · Ketoklar</title>
+  </head>
+  <body class="bg-stone-50 text-stone-900 font-sans">
+    <header class="border-b border-stone-200 bg-white sticky top-0 z-10">
+      <nav class="max-w-5xl mx-auto flex items-center justify-between px-4 py-4">
+        <a href="/" class="text-xl font-bold tracking-tight text-amber-800">Ketoklar</a>
+        <div class="flex gap-6 text-sm font-medium text-stone-600">
+          <a href="/opskrifter" class="hover:text-amber-800">Opskrifter</a>
+          <a href="/artikler" class="hover:text-amber-800">Artikler</a>
+          <a href="/artikler/anekdoter" class="hover:text-amber-800">Anekdoter</a>
+        </div>
+      </nav>
+    </header>
+    <main class="max-w-5xl mx-auto px-4 py-10">
+      <slot />
+    </main>
+    <footer class="border-t border-stone-200 mt-20 py-8 text-center text-sm text-stone-500">
+      Ketoklar. Bygget med kærlighed til smør.
+    </footer>
+  </body>
+</html>

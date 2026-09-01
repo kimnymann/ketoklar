@@ -1,0 +1,47 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import type { Recipe } from '../../lib/db';
+import { CATEGORY_LABELS } from '../../lib/db';
+
+import { env } from "cloudflare:workers";
+const db = env.DB;
+const category = Astro.url.searchParams.get('kategori');
+
+const query = category
+  ? db.prepare(`SELECT * FROM recipes WHERE status = 'godkendt' AND category = ? ORDER BY published_at DESC`).bind(category)
+  : db.prepare(`SELECT * FROM recipes WHERE status = 'godkendt' ORDER BY published_at DESC`);
+
+const { results: recipes } = await query.all<Recipe>();
+
+const categories: Array<Recipe['category']> = ['morgen', 'frokost', 'aften', 'laekkerier'];
+---
+
+<Layout title="Opskrifter">
+  <h1 class="text-3xl font-bold mb-6">Opskrifter</h1>
+
+  <div class="flex gap-2 mb-8 flex-wrap">
+    <a href="/opskrifter" class={`px-4 py-2 rounded-full text-sm font-medium border ${!category ? 'bg-amber-800 text-white border-amber-800' : 'border-stone-300 text-stone-600'}`}>
+      Alle
+    </a>
+    {categories.map((c) => (
+      <a href={`/opskrifter?kategori=${c}`} class={`px-4 py-2 rounded-full text-sm font-medium border ${category === c ? 'bg-amber-800 text-white border-amber-800' : 'border-stone-300 text-stone-600'}`}>
+        {CATEGORY_LABELS[c]}
+      </a>
+    ))}
+  </div>
+
+  <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+    {recipes.map((r) => (
+      <a href={`/opskrifter/${r.slug}`} class="block bg-white rounded-2xl border border-stone-200 p-5 hover:shadow-md transition relative">
+        {r.locked === 1 && (
+          <span class="absolute top-4 right-4 text-xs bg-stone-900 text-white px-2 py-1 rounded-full">Kun abonnenter</span>
+        )}
+        <span class="text-xs uppercase tracking-wide text-amber-800 font-semibold">{CATEGORY_LABELS[r.category]}</span>
+        <h3 class="text-lg font-bold mt-1">{r.title}</h3>
+        <p class="text-sm text-stone-500 mt-2">{r.kcal} kcal · {r.carbs_g} g kulhydrat · {r.prep_minutes} min</p>
+      </a>
+    ))}
+  </div>
+
+  {recipes.length === 0 && <p class="text-stone-500">Ingen opskrifter i denne kategori endnu.</p>}
+</Layout>
