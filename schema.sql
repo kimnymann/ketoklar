@@ -59,6 +59,18 @@ CREATE TABLE IF NOT EXISTS article_recipes (
   PRIMARY KEY (article_id, recipe_id)
 );
 
+CREATE TABLE IF NOT EXISTS article_images (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  marker TEXT NOT NULL,          -- kort id brugt i [[image:id|prompt]] i selve teksten
+  prompt TEXT NOT NULL,          -- ret/artikel-specifik del, kombineres med fast husstil ved generering
+  image_url TEXT,
+  image_model TEXT,
+  image_status TEXT NOT NULL DEFAULT 'mangler' CHECK (image_status IN ('mangler','under_generering','klar','fejlet')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (article_id, marker)
+);
+
 CREATE INDEX IF NOT EXISTS idx_recipes_category ON recipes(category);
 CREATE INDEX IF NOT EXISTS idx_recipes_status ON recipes(status);
 CREATE INDEX IF NOT EXISTS idx_articles_category ON articles(category);

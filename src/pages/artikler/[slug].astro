@@ -28,6 +28,13 @@ const { results: relatedRecipes } = await db
 
 const recipesBySlug = new Map(relatedRecipes.map((r) => [r.slug, r]));
 
+const { results: bodyImages } = await db
+  .prepare(`SELECT marker, image_url, image_status FROM article_images WHERE article_id = ?`)
+  .bind(article.id)
+  .all<{ marker: string; image_url: string | null; image_status: string }>();
+const bodyImagesByMarker = new Map(bodyImages.map((i) => [i.marker, i]));
+let articleImageCount = 0;
+
 // TODO fase 2: erstat med rigtigt abonnements-tjek (session/cookie)
 const isSubscriber = false;
 const isLocked = article.locked === 1 && !isSubscriber;
@@ -96,6 +103,24 @@ const heroColors: Record<Article['category'], string> = {
               </div>
             </a>
           );
+        }
+        if (block.type === 'articleImage') {
+          const img = bodyImagesByMarker.get(block.marker);
+          if (!img || !img.image_url) return null;
+          const variant = articleImageCount % 3;
+          articleImageCount++;
+          if (variant === 0) {
+            // Fuld bredde, bredt format
+            return <img src={img.image_url} alt="" class="w-full aspect-[16/9] object-cover rounded-sm my-6" loading="lazy" />;
+          }
+          if (variant === 1) {
+            // Mindre, centreret, kvadratisk med ramme
+            return (
+              <img src={img.image_url} alt="" class="w-2/3 mx-auto aspect-square object-cover rounded-sm my-6 border border-[var(--ink)]/15" loading="lazy" />
+            );
+          }
+          // Offset til siden, portræt-format, ikke flydende for at undgå layout-fejl med efterfølgende afsnit
+          return <img src={img.image_url} alt="" class="w-1/2 aspect-[3/4] object-cover rounded-sm my-6 ml-auto" loading="lazy" />;
         }
         return <p set:html={block.html} />;
       })}

@@ -6,7 +6,8 @@ export type ArticleBlock =
   | { type: 'heading'; text: string }
   | { type: 'paragraph'; html: string }
   | { type: 'quote'; text: string }
-  | { type: 'recipe'; slug: string };
+  | { type: 'recipe'; slug: string }
+  | { type: 'articleImage'; marker: string };
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -37,6 +38,12 @@ export function parseArticleBody(body: string): ArticleBlock[] {
     const recipeMatch = trimmed.match(/^\[\[recipe:([a-z0-9-]+)\]\]$/);
     if (recipeMatch) {
       blocks.push({ type: 'recipe', slug: recipeMatch[1] });
+      continue;
+    }
+
+    const imageMatch = trimmed.match(/^\[\[image:([a-z0-9-]+)\|[^\]]+\]\]$/);
+    if (imageMatch) {
+      blocks.push({ type: 'articleImage', marker: imageMatch[1] });
       continue;
     }
 

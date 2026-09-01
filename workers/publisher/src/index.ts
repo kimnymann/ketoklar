@@ -1,5 +1,5 @@
 import { handleTestImages, type ImageEnv } from './testImages';
-import { ensureRecipeImage, ensureArticleImage } from './generateImage';
+import { ensureRecipeImage, ensureArticleImage, ensureArticleBodyImages } from './generateImage';
 
 export interface Env extends ImageEnv {
   DB: D1Database;
@@ -50,13 +50,13 @@ async function publishRecipes(env: Env, count: number) {
 async function publishArticles(env: Env, count: number) {
   const { results } = await env.DB
     .prepare(
-      `SELECT id, slug, category FROM articles
+      `SELECT id, slug, category, body FROM articles
        WHERE status = 'godkendt' AND published_at IS NULL
        ORDER BY created_at ASC
        LIMIT ?`
     )
     .bind(count)
-    .all<{ id: number; slug: string; category: 'videnskab' | 'livsstil' | 'anekdote' }>();
+    .all<{ id: number; slug: string; category: 'videnskab' | 'livsstil' | 'anekdote'; body: string }>();
 
   if (results.length === 0) {
     return { published: [] as string[], warning: 'Artikelkøen er tom, ingen ny artikel at udgive.', imageWarnings: [] as string[] };
@@ -64,9 +64,13 @@ async function publishArticles(env: Env, count: number) {
 
   const imageWarnings: string[] = [];
   for (const article of results) {
-    const result = await ensureArticleImage(env, article);
-    if (!result.ok) {
-      imageWarnings.push(`Billede fejlede for ${article.slug}: ${result.error}`);
+    const heroResult = await ensureArticleImage(env, article);
+    if (!heroResult.ok) {
+      imageWarnings.push(`Hero-billede fejlede for ${article.slug}: ${heroResult.error}`);
+    }
+    const bodyResults = await ensureArticleBodyImages(env, article);
+    for (const b of bodyResults) {
+      if (!b.ok) imageWarnings.push(`Billede '${b.marker}' fejlede for ${article.slug}: ${b.error}`);
     }
   }
 
@@ -127,7 +131,7 @@ export default {
         recipeOutcomes.push({ slug: recipe.slug, ok: result.ok, error: result.error });
       }
 
-      const { results: articles } = await env.DB
+      const { results: articlesNeedingHero } = await env.DB
         .prepare(
           `SELECT id, slug, category FROM articles
            WHERE image_status = 'mangler' AND published_at IS NOT NULL
@@ -136,14 +140,25 @@ export default {
         .all<{ id: number; slug: string; category: 'videnskab' | 'livsstil' | 'anekdote' }>();
 
       const articleOutcomes = [];
-      for (const article of articles) {
+      for (const article of articlesNeedingHero) {
         const result = await ensureArticleImage(env, article);
         articleOutcomes.push({ slug: article.slug, ok: result.ok, error: result.error });
+      }
+
+      const { results: publishedArticles } = await env.DB
+        .prepare(`SELECT id, slug, body FROM articles WHERE published_at IS NOT NULL ORDER BY id ASC LIMIT 20`)
+        .all<{ id: number; slug: string; body: string }>();
+
+      const bodyImageOutcomes = [];
+      for (const article of publishedArticles) {
+        const bodyResults = await ensureArticleBodyImages(env, article);
+        bodyImageOutcomes.push(...bodyResults.map((r) => ({ ...r, articleSlug: article.slug })));
       }
 
       return Response.json({
         recipes: { processed: recipeOutcomes.length, outcomes: recipeOutcomes },
         articles: { processed: articleOutcomes.length, outcomes: articleOutcomes },
+        articleBodyImages: { processed: bodyImageOutcomes.length, outcomes: bodyImageOutcomes },
       });
     }
 
