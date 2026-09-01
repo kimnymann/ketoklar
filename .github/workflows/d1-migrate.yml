@@ -16,6 +16,9 @@ jobs:
       - name: Hent kode
         uses: actions/checkout@v4
 
+      - name: Installer afhængigheder
+        run: npm install
+
       - name: Kør skema mod D1 (idempotent, fejler ikke hvis tabeller findes)
         uses: cloudflare/wrangler-action@v3
         with:
