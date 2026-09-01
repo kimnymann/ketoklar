@@ -11,5 +11,14 @@
       "database_name": "ketoklar-db",
       "database_id": "00000000-0000-0000-0000-000000000000"
     }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "ketoklar-images"
+    }
   ]
 }

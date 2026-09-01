@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS recipes (
   fat_g REAL,
   protein_g REAL,
   image_url TEXT,
+  image_prompt TEXT,        -- kun den ret-specifikke del, ikke den faste stilskabelon
+  image_model TEXT,         -- fx 'flux-1-schnell', hvilken model der lavede billedet
+  image_status TEXT NOT NULL DEFAULT 'mangler' CHECK (image_status IN ('mangler','under_generering','klar','fejlet')),
+  image_version INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'kladde' CHECK (status IN ('kladde','til_godkendelse','godkendt')),
   locked INTEGER NOT NULL DEFAULT 0,   -- 0 = fri, 1 = kun abonnenter (fase 2)
   published_at TEXT,

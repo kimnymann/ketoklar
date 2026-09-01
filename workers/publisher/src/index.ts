@@ -1,4 +1,6 @@
-export interface Env {
+import { handleTestImages, type ImageEnv } from './testImages';
+
+export interface Env extends ImageEnv {
   DB: D1Database;
   PUBLISH_SECRET?: string;
 }
@@ -84,8 +86,13 @@ export default {
   // Manuel test-udløser: POST /publish med header x-publish-secret
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
+
+    if (url.pathname === '/test-images' && request.method === 'POST') {
+      return handleTestImages(request, env);
+    }
+
     if (url.pathname !== '/publish' || request.method !== 'POST') {
-      return new Response('Ketoklar publisher worker. POST /publish for at teste manuelt.', { status: 200 });
+      return new Response('Ketoklar publisher worker. POST /publish for at teste manuelt, POST /test-images for at teste billedmodeller.', { status: 200 });
     }
 
     if (!env.PUBLISH_SECRET || request.headers.get('x-publish-secret') !== env.PUBLISH_SECRET) {
