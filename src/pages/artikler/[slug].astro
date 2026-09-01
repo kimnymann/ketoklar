@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import type { Article, Recipe } from '../../lib/db';
 import { CATEGORY_LABELS } from '../../lib/db';
+import { parseArticleBody } from '../../lib/articleBody';
 
 const { slug } = Astro.params;
 import { env } from "cloudflare:workers";
@@ -28,6 +29,7 @@ const { results: relatedRecipes } = await db
 // TODO fase 2: erstat med rigtigt abonnements-tjek (session/cookie)
 const isSubscriber = false;
 const isLocked = article.locked === 1 && !isSubscriber;
+const blocks = isLocked ? [] : parseArticleBody(article.body);
 ---
 
 <Layout title={article.title} description={article.excerpt ?? undefined}>
@@ -43,7 +45,15 @@ const isLocked = article.locked === 1 && !isSubscriber;
       </a>
     </div>
   ) : (
-    <div class="max-w-2xl whitespace-pre-line leading-relaxed" style="color: var(--ink);">{article.body}</div>
+    <div class="max-w-2xl leading-relaxed space-y-4" style="color: var(--ink);">
+      {blocks.map((block) =>
+        block.type === 'heading' ? (
+          <h2 class="font-display text-xl font-600 pt-2" style="color: var(--ink);">{block.text}</h2>
+        ) : (
+          <p>{block.text}</p>
+        )
+      )}
+    </div>
   )}
 
   {relatedRecipes.length > 0 && (
