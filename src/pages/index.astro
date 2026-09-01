@@ -75,10 +75,9 @@ const departmentEntries = await Promise.all(
               {r.image_url ? (
                 <img src={r.image_url} alt={r.title} class="aspect-[4/3] w-full object-cover mb-3 rounded-sm" loading="lazy" />
               ) : (
-                <div class="aspect-[4/3] mb-3 flex items-end p-4 rounded-sm" style="background-color: var(--sage);">
-                  <span class="font-display text-lg leading-tight" style="color: var(--paper-light);">{r.title}</span>
-                </div>
+                <div class="aspect-[4/3] mb-3 rounded-sm" style="background-color: var(--sage);"></div>
               )}
+              <h3 class="font-display font-600" style="color: var(--ink);">{r.title}</h3>
               <p class="text-sm" style="color: var(--sage);">{r.kcal} kcal · {r.carbs_g} g kulhydrat · {r.prep_minutes} min</p>
             </a>
           ))}
