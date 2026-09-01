@@ -45,8 +45,7 @@ const isLocked = recipe.locked === 1 && !isSubscriber;
   <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[recipe.category]}</span>
   <h1 class="text-3xl font-display font-600 mt-1 mb-4">{recipe.title}</h1>
   <p class="text-sm text-[var(--sage)] mb-8">
-    {recipe.servings} portioner · {recipe.prep_minutes} min · {recipe.kcal} kcal pr. portion ·
-    {recipe.carbs_g} g kulhydrat · {recipe.fat_g} g fedt · {recipe.protein_g} g protein
+    {recipe.servings} portioner · {recipe.prep_minutes} min · {recipe.kcal} kcal pr. portion · {recipe.carbs_g} g kulhydrat · {recipe.fat_g} g fedt · {recipe.protein_g} g protein
   </p>
 
   {isLocked ? (
