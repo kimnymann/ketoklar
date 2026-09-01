@@ -27,14 +27,37 @@ function pickSceneVariant(seed: string): string {
 }
 
 export type RecipeForPrompt = {
+  slug: string;
   title: string;
   category: 'morgen' | 'frokost' | 'aften' | 'laekkerier';
   ingredients_json: string;
 };
 
+// Nogle retter beskrives dårligt af en simpel ingrediensliste, modellen har intet at
+// forestille sig formen og anretningen ud fra ("kokosmakroner" bliver bare "en dessert").
+// Her overstyres med en konkret visuel beskrivelse af, hvordan retten faktisk ser ud.
+// Tilføj flere her, i takt med at vi opdager billeder, der ikke rammer retten.
+const VISUAL_OVERRIDES: Record<string, string> = {
+  'kokosmakroner':
+    'small golden-brown coconut macaroon mounds with a crisp toasted exterior and visible shredded coconut texture, stacked on a plate',
+  'cheesecake-i-glas':
+    'no-bake cheesecake mousse served in a small glass jar, smooth pale cream layer, no crust, a small spoon resting beside it',
+  'kyllingelaarfilet-karrysauce':
+    'sliced chicken thigh pieces served in a golden yellow curry cream sauce with cabbage, in a shallow bowl',
+  'caesarsalat-kylling':
+    'a Caesar salad in a bowl with torn romaine lettuce leaves, sliced grilled chicken on top, and shaved parmesan, no pasta',
+  'tunmousse-avocado':
+    'tuna mousse with visible flaked tuna texture, filled into a halved avocado, served on a plate',
+  'flaeskesteg-skysovs-groenkaal':
+    'sliced Danish roast pork with crispy crackling on top, dark gravy, and sautéed kale on the side',
+};
+
 // Kun den ret-specifikke del gemmes i databasen (recipes.image_prompt).
 // Den fulde prompt sendt til billedmodellen er altid: buildFullPrompt(...)
 export function buildRecipePrompt(recipe: RecipeForPrompt): string {
+  if (VISUAL_OVERRIDES[recipe.slug]) {
+    return `${recipe.title}, ${VISUAL_OVERRIDES[recipe.slug]}`;
+  }
   const ingredients = JSON.parse(recipe.ingredients_json) as Array<{ name: string }>;
   const mainIngredients = ingredients.slice(0, 4).map((i) => i.name).join(', ');
   const mealContext: Record<RecipeForPrompt['category'], string> = {
