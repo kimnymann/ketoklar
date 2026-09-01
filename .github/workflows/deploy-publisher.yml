@@ -1,0 +1,30 @@
+name: Deploy publisher worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/publisher/**'
+      - '.github/workflows/deploy-publisher.yml'
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/publisher
+    steps:
+      - name: Hent kode
+        uses: actions/checkout@v4
+
+      - name: Installer afhængigheder
+        run: npm install
+
+      - name: Deploy til Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/publisher
+          command: deploy
