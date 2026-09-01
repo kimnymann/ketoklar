@@ -7,6 +7,7 @@ export type Recipe = {
   prep_minutes: number | null;
   ingredients_json: string;
   instructions: string;
+  tips: string | null;
   kcal: number | null;
   carbs_g: number | null;
   fat_g: number | null;

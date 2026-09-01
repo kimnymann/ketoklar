@@ -92,6 +92,16 @@ const isLocked = recipe.locked === 1 && !isSubscriber;
             </li>
           ))}
         </ol>
+
+        {recipe.tips && (
+          <div class="mt-6 flex gap-3 p-4 rounded-2xl border" style="background-color: var(--paper-light); border-color: var(--ink)/15;">
+            <span class="text-xl leading-none">💡</span>
+            <div>
+              <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--rust);">Tip</span>
+              <p class="text-[var(--ink)] mt-1">{recipe.tips}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )}

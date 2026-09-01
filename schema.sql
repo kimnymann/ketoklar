@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS recipes (
   prep_minutes INTEGER,
   ingredients_json TEXT NOT NULL,      -- JSON array: [{name, amount, unit}]
   instructions TEXT NOT NULL,          -- step-by-step text
+  tips TEXT,                           -- praktisk tip til opskriften
   kcal INTEGER,
   carbs_g REAL,
   fat_g REAL,
