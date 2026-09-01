@@ -20,3 +20,13 @@ body {
 .font-display {
   font-family: 'Fraunces', serif;
 }
+
+.ketoklar-inline-link {
+  color: var(--rust);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ketoklar-inline-link:hover {
+  color: var(--rust-dark);
+}

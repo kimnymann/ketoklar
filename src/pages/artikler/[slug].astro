@@ -3,9 +3,9 @@ import Layout from '../../layouts/Layout.astro';
 import type { Article, Recipe } from '../../lib/db';
 import { CATEGORY_LABELS } from '../../lib/db';
 import { parseArticleBody } from '../../lib/articleBody';
+import { env } from "cloudflare:workers";
 
 const { slug } = Astro.params;
-import { env } from "cloudflare:workers";
 const db = env.DB;
 
 const article = await db
@@ -26,15 +26,27 @@ const { results: relatedRecipes } = await db
   .bind(article.id)
   .all<Recipe>();
 
+const recipesBySlug = new Map(relatedRecipes.map((r) => [r.slug, r]));
+
 // TODO fase 2: erstat med rigtigt abonnements-tjek (session/cookie)
 const isSubscriber = false;
 const isLocked = article.locked === 1 && !isSubscriber;
 const blocks = isLocked ? [] : parseArticleBody(article.body);
+
+const heroColors: Record<Article['category'], string> = {
+  videnskab: 'var(--sage)',
+  livsstil: 'var(--rust)',
+  anekdote: 'var(--ink)',
+};
 ---
 
 <Layout title={article.title} description={article.excerpt ?? undefined}>
-  <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{article.category}</span>
-  <h1 class="text-3xl font-display font-600 mt-1 mb-8">{article.title}</h1>
+  <div class="aspect-[21/9] mb-8 flex items-end p-8 rounded-sm" style={`background-color: ${heroColors[article.category]};`}>
+    <div>
+      <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--paper-light);">{article.category}</span>
+      <h1 class="font-display text-3xl md:text-4xl font-700 mt-1" style="color: var(--paper-light);">{article.title}</h1>
+    </div>
+  </div>
 
   {isLocked ? (
     <div class="bg-[var(--paper-light)] border border-[var(--ink)]/15 rounded-2xl p-10 text-center">
@@ -45,20 +57,40 @@ const blocks = isLocked ? [] : parseArticleBody(article.body);
       </a>
     </div>
   ) : (
-    <div class="max-w-2xl leading-relaxed space-y-4" style="color: var(--ink);">
-      {blocks.map((block) =>
-        block.type === 'heading' ? (
-          <h2 class="font-display text-xl font-600 pt-2" style="color: var(--ink);">{block.text}</h2>
-        ) : (
-          <p>{block.text}</p>
-        )
-      )}
+    <div class="max-w-2xl leading-relaxed space-y-5" style="color: var(--ink);">
+      {blocks.map((block) => {
+        if (block.type === 'heading') {
+          return <h2 class="font-display text-xl font-600 pt-3" style="color: var(--ink);">{block.text}</h2>;
+        }
+        if (block.type === 'quote') {
+          return (
+            <blockquote class="border-l-4 pl-5 py-1 my-2" style="border-color: var(--rust);">
+              <p class="font-display text-xl italic" style="color: var(--rust-dark);">{block.text}</p>
+            </blockquote>
+          );
+        }
+        if (block.type === 'recipe') {
+          const r = recipesBySlug.get(block.slug);
+          if (!r) return null;
+          return (
+            <a href={`/opskrifter/${r.slug}`} class="not-prose flex items-center gap-4 bg-[var(--card)] border border-[var(--ink)]/15 rounded-2xl p-4 hover:shadow-md transition my-2">
+              <div class="w-16 h-16 flex-shrink-0 rounded-lg" style="background-color: var(--sage);"></div>
+              <div>
+                <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--rust);">Opskrift, {CATEGORY_LABELS[r.category]}</span>
+                <h3 class="font-display font-600">{r.title}</h3>
+                <p class="text-sm" style="color: var(--sage);">{r.kcal} kcal · {r.carbs_g} g kulhydrat</p>
+              </div>
+            </a>
+          );
+        }
+        return <p set:html={block.html} />;
+      })}
     </div>
   )}
 
   {relatedRecipes.length > 0 && (
     <div class="mt-14 pt-8 border-t border-[var(--ink)]/15">
-      <h2 class="text-xl font-display font-600 mb-4">Opskrifter nævnt i denne artikel</h2>
+      <h2 class="text-xl font-display font-600 mb-4">Alle opskrifter nævnt i denne artikel</h2>
       <div class="grid sm:grid-cols-3 gap-4">
         {relatedRecipes.map((r) => (
           <a href={`/opskrifter/${r.slug}`} class="block bg-[var(--card)] rounded-2xl border border-[var(--ink)]/15 p-4 hover:shadow-md transition">
