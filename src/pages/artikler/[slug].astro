@@ -119,8 +119,8 @@ const heroColors: Record<Article['category'], string> = {
               <img src={img.image_url} alt="" class="w-2/3 mx-auto aspect-square object-cover rounded-sm my-6 border border-[var(--ink)]/15" loading="lazy" />
             );
           }
-          // Offset til siden, portræt-format, ikke flydende for at undgå layout-fejl med efterfølgende afsnit
-          return <img src={img.image_url} alt="" class="w-1/2 aspect-[3/4] object-cover rounded-sm my-6 ml-auto" loading="lazy" />;
+          // Mindre portræt-format, centreret ligesom kvadrat-varianten, men et andet format for variation
+          return <img src={img.image_url} alt="" class="w-1/2 aspect-[3/4] object-cover rounded-sm my-6 mx-auto" loading="lazy" />;
         }
         return <p set:html={block.html} />;
       })}
