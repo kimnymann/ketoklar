@@ -32,13 +32,22 @@ const categories: Array<Recipe['category']> = ['morgen', 'frokost', 'aften', 'la
 
   <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
     {recipes.map((r) => (
-      <a href={`/opskrifter/${r.slug}`} class="block bg-[var(--card)] rounded-2xl border border-[var(--ink)]/15 p-5 hover:shadow-md transition relative">
+      <a href={`/opskrifter/${r.slug}`} class="block bg-[var(--card)] rounded-2xl border border-[var(--ink)]/15 overflow-hidden hover:shadow-md transition relative">
         {r.locked === 1 && (
-          <span class="absolute top-4 right-4 text-xs bg-[var(--ink)] text-white px-2 py-1 rounded-full">Kun abonnenter</span>
+          <span class="absolute top-4 right-4 z-10 text-xs bg-[var(--ink)] text-white px-2 py-1 rounded-full">Kun abonnenter</span>
         )}
-        <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[r.category]}</span>
-        <h3 class="text-lg font-display font-600 mt-1">{r.title}</h3>
-        <p class="text-sm text-[var(--sage)] mt-2">{r.kcal} kcal · {r.carbs_g} g kulhydrat · {r.prep_minutes} min</p>
+        {r.image_url ? (
+          <img src={r.image_url} alt={r.title} class="aspect-[4/3] w-full object-cover" loading="lazy" />
+        ) : (
+          <div class="aspect-[4/3] flex items-end p-4" style="background-color: var(--sage);">
+            <span class="font-display text-white leading-tight">{r.title}</span>
+          </div>
+        )}
+        <div class="p-5">
+          <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[r.category]}</span>
+          <h3 class="text-lg font-display font-600 mt-1">{r.title}</h3>
+          <p class="text-sm text-[var(--sage)] mt-2">{r.kcal} kcal · {r.carbs_g} g kulhydrat · {r.prep_minutes} min</p>
+        </div>
       </a>
     ))}
   </div>

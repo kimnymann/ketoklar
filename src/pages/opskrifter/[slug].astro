@@ -33,6 +33,12 @@ const isLocked = recipe.locked === 1 && !isSubscriber;
 ---
 
 <Layout title={recipe.title}>
+  {recipe.image_url ? (
+    <img src={recipe.image_url} alt={recipe.title} class="w-full aspect-[21/9] object-cover rounded-sm mb-6" />
+  ) : (
+    <div class="w-full aspect-[21/9] rounded-sm mb-6" style="background-color: var(--sage);"></div>
+  )}
+
   <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[recipe.category]}</span>
   <h1 class="text-3xl font-display font-600 mt-1 mb-4">{recipe.title}</h1>
   <p class="text-sm text-[var(--sage)] mb-8">

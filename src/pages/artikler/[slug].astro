@@ -74,7 +74,11 @@ const heroColors: Record<Article['category'], string> = {
           if (!r) return null;
           return (
             <a href={`/opskrifter/${r.slug}`} class="not-prose flex items-center gap-4 bg-[var(--card)] border border-[var(--ink)]/15 rounded-2xl p-4 hover:shadow-md transition my-2">
-              <div class="w-16 h-16 flex-shrink-0 rounded-lg" style="background-color: var(--sage);"></div>
+              {r.image_url ? (
+                <img src={r.image_url} alt={r.title} class="w-16 h-16 flex-shrink-0 rounded-lg object-cover" loading="lazy" />
+              ) : (
+                <div class="w-16 h-16 flex-shrink-0 rounded-lg" style="background-color: var(--sage);"></div>
+              )}
               <div>
                 <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--rust);">Opskrift, {CATEGORY_LABELS[r.category]}</span>
                 <h3 class="font-display font-600">{r.title}</h3>
