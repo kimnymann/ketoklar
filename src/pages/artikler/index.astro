@@ -6,7 +6,7 @@ import { env } from "cloudflare:workers";
 const db = env.DB;
 
 const { results: articles } = await db
-  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND category IN ('videnskab','livsstil') ORDER BY published_at DESC`)
+  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') AND category IN ('videnskab','livsstil') ORDER BY published_at DESC`)
   .all<Article>();
 ---
 

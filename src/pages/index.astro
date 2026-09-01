@@ -7,11 +7,11 @@ import { env } from "cloudflare:workers";
 const db = env.DB;
 
 const { results: recipes } = await db
-  .prepare(`SELECT * FROM recipes WHERE status = 'godkendt' ORDER BY published_at DESC LIMIT 6`)
+  .prepare(`SELECT * FROM recipes WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC LIMIT 6`)
   .all<Recipe>();
 
 const { results: articles } = await db
-  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' ORDER BY published_at DESC LIMIT 3`)
+  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC LIMIT 3`)
   .all<Article>();
 ---
 

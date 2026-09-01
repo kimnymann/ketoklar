@@ -8,8 +8,8 @@ const db = env.DB;
 const category = Astro.url.searchParams.get('kategori');
 
 const query = category
-  ? db.prepare(`SELECT * FROM recipes WHERE status = 'godkendt' AND category = ? ORDER BY published_at DESC`).bind(category)
-  : db.prepare(`SELECT * FROM recipes WHERE status = 'godkendt' ORDER BY published_at DESC`);
+  ? db.prepare(`SELECT * FROM recipes WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') AND category = ? ORDER BY published_at DESC`).bind(category)
+  : db.prepare(`SELECT * FROM recipes WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC`);
 
 const { results: recipes } = await query.all<Recipe>();
 

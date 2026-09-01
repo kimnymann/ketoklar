@@ -25,3 +25,7 @@ pnpm-debug.log*
 -e 
 # wrangler local state
 .wrangler/
+-e 
+# publisher worker
+workers/*/node_modules/
+workers/*/.wrangler/

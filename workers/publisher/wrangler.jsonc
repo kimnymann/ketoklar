@@ -1,0 +1,15 @@
+{
+  "name": "ketoklar-publisher",
+  "compatibility_date": "2026-08-01",
+  "main": "src/index.ts",
+  "triggers": {
+    "crons": ["0 6 * * *"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ketoklar-db",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+export interface Env {
+  DB: D1Database;
+  PUBLISH_SECRET?: string;
+}
+
+const RECIPES_PER_DAY = 2;
+const ARTICLES_PER_WEEK = 1;
+
+async function publishRecipes(db: D1Database, count: number) {
+  const { results } = await db
+    .prepare(
+      `SELECT id, slug FROM recipes
+       WHERE status = 'godkendt' AND published_at IS NULL
+       ORDER BY created_at ASC
+       LIMIT ?`
+    )
+    .bind(count)
+    .all<{ id: number; slug: string }>();
+
+  if (results.length === 0) {
+    return { published: [] as string[], warning: 'Opskriftskøen er tom, ingen nye opskrifter at udgive.' };
+  }
+
+  const ids = results.map((r) => r.id);
+  const placeholders = ids.map(() => '?').join(',');
+  await db
+    .prepare(`UPDATE recipes SET published_at = datetime('now') WHERE id IN (${placeholders})`)
+    .bind(...ids)
+    .run();
+
+  return { published: results.map((r) => r.slug), warning: results.length < count ? `Kun ${results.length} af ${count} ønskede opskrifter var klar i køen.` : null };
+}
+
+async function publishArticles(db: D1Database, count: number) {
+  const { results } = await db
+    .prepare(
+      `SELECT id, slug FROM articles
+       WHERE status = 'godkendt' AND published_at IS NULL
+       ORDER BY created_at ASC
+       LIMIT ?`
+    )
+    .bind(count)
+    .all<{ id: number; slug: string }>();
+
+  if (results.length === 0) {
+    return { published: [] as string[], warning: 'Artikelkøen er tom, ingen ny artikel at udgive.' };
+  }
+
+  const ids = results.map((r) => r.id);
+  const placeholders = ids.map(() => '?').join(',');
+  await db
+    .prepare(`UPDATE articles SET published_at = datetime('now') WHERE id IN (${placeholders})`)
+    .bind(...ids)
+    .run();
+
+  return { published: results.map((r) => r.slug), warning: null };
+}
+
+async function runPublishing(env: Env) {
+  const recipeResult = await publishRecipes(env.DB, RECIPES_PER_DAY);
+
+  // Mandag = kør ugentlig artikel-udgivelse (UTC ugedag, 1 = mandag)
+  const isMonday = new Date().getUTCDay() === 1;
+  const articleResult = isMonday
+    ? await publishArticles(env.DB, ARTICLES_PER_WEEK)
+    : { published: [], warning: null };
+
+  const summary = {
+    timestamp: new Date().toISOString(),
+    recipes: recipeResult,
+    articles: articleResult,
+  };
+
+  console.log(JSON.stringify(summary));
+  return summary;
+}
+
+export default {
+  // Køres automatisk af Cron Trigger (se wrangler.jsonc)
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(runPublishing(env));
+  },
+
+  // Manuel test-udløser: POST /publish med header x-publish-secret
+  async fetch(request: Request, env: Env) {
+    const url = new URL(request.url);
+    if (url.pathname !== '/publish' || request.method !== 'POST') {
+      return new Response('Ketoklar publisher worker. POST /publish for at teste manuelt.', { status: 200 });
+    }
+
+    if (!env.PUBLISH_SECRET || request.headers.get('x-publish-secret') !== env.PUBLISH_SECRET) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    const summary = await runPublishing(env);
+    return Response.json(summary);
+  },
+};

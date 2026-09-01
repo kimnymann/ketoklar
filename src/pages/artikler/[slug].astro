@@ -8,7 +8,7 @@ import { env } from "cloudflare:workers";
 const db = env.DB;
 
 const article = await db
-  .prepare(`SELECT * FROM articles WHERE slug = ? AND status = 'godkendt'`)
+  .prepare(`SELECT * FROM articles WHERE slug = ? AND status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now')`)
   .bind(slug)
   .first<Article>();
 
@@ -20,7 +20,7 @@ const { results: relatedRecipes } = await db
   .prepare(`
     SELECT r.* FROM recipes r
     JOIN article_recipes ar ON ar.recipe_id = r.id
-    WHERE ar.article_id = ? AND r.status = 'godkendt'
+    WHERE ar.article_id = ? AND r.status = 'godkendt' AND r.published_at IS NOT NULL AND r.published_at <= datetime('now')
   `)
   .bind(article.id)
   .all<Recipe>();
