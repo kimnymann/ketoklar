@@ -1,6 +1,6 @@
 -- 16 godkendte opskrifter, klar til publicering
 
-INSERT INTO recipes (slug, title, category, servings, prep_minutes, ingredients_json, instructions, kcal, carbs_g, fat_g, protein_g, status, published_at) VALUES
+INSERT OR IGNORE INTO recipes (slug, title, category, servings, prep_minutes, ingredients_json, instructions, kcal, carbs_g, fat_g, protein_g, status, published_at) VALUES
 ('aeggemuffins-spinat-feta', 'Æggemuffins med spinat og feta', 'morgen', 2, 25,
  '[{"name":"æg","amount":4,"unit":"stk"},{"name":"feta, smuldret","amount":50,"unit":"g"},{"name":"frisk spinat, hakket","amount":30,"unit":"g"},{"name":"fløde 38%","amount":20,"unit":"ml"},{"name":"salt og peber","amount":0,"unit":""}]',
  'Pisk æg og fløde sammen. Rør spinat og feta i. Hæld i smurte muffinforme. Bag ved 180 grader i 18-20 minutter. Køl af, eller spis lune.',

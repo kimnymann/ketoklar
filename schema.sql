@@ -1,6 +1,6 @@
 -- Ketoklar database schema (Cloudflare D1 / SQLite)
 
-CREATE TABLE recipes (
+CREATE TABLE IF NOT EXISTS recipes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   slug TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE recipes (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE articles (
+CREATE TABLE IF NOT EXISTS articles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   slug TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
@@ -33,24 +33,24 @@ CREATE TABLE articles (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE tags (
+CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE recipe_tags (
+CREATE TABLE IF NOT EXISTS recipe_tags (
   recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
   tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
   PRIMARY KEY (recipe_id, tag_id)
 );
 
-CREATE TABLE article_recipes (
+CREATE TABLE IF NOT EXISTS article_recipes (
   article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
   recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
   PRIMARY KEY (article_id, recipe_id)
 );
 
-CREATE INDEX idx_recipes_category ON recipes(category);
-CREATE INDEX idx_recipes_status ON recipes(status);
-CREATE INDEX idx_articles_category ON articles(category);
-CREATE INDEX idx_articles_status ON articles(status);
+CREATE INDEX IF NOT EXISTS idx_recipes_category ON recipes(category);
+CREATE INDEX IF NOT EXISTS idx_recipes_status ON recipes(status);
+CREATE INDEX IF NOT EXISTS idx_articles_category ON articles(category);
+CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status);
