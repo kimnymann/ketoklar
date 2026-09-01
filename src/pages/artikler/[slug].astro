@@ -41,12 +41,22 @@ const heroColors: Record<Article['category'], string> = {
 ---
 
 <Layout title={article.title} description={article.excerpt ?? undefined}>
-  <div class="aspect-[21/9] mb-8 flex items-end p-8 rounded-sm" style={`background-color: ${heroColors[article.category]};`}>
-    <div>
-      <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--paper-light);">{article.category}</span>
-      <h1 class="font-display text-3xl md:text-4xl font-700 mt-1" style="color: var(--paper-light);">{article.title}</h1>
+  {article.image_url ? (
+    <img src={article.image_url} alt={article.title} class="w-full aspect-[21/9] object-cover rounded-sm mb-8" />
+  ) : (
+    <div class="aspect-[21/9] mb-8 flex items-end p-8 rounded-sm" style={`background-color: ${heroColors[article.category]};`}>
+      <div>
+        <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--paper-light);">{article.category}</span>
+        <h1 class="font-display text-3xl md:text-4xl font-700 mt-1" style="color: var(--paper-light);">{article.title}</h1>
+      </div>
     </div>
-  </div>
+  )}
+  {article.image_url && (
+    <div class="mb-8">
+      <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--rust);">{article.category}</span>
+      <h1 class="font-display text-3xl md:text-4xl font-700 mt-1" style="color: var(--ink);">{article.title}</h1>
+    </div>
+  )}
 
   {isLocked ? (
     <div class="bg-[var(--paper-light)] border border-[var(--ink)]/15 rounded-2xl p-10 text-center">

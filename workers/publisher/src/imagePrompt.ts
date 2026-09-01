@@ -28,3 +28,22 @@ export function buildRecipePrompt(recipe: RecipeForPrompt): string {
 export function buildFullPrompt(recipeSpecificPrompt: string): string {
   return `${recipeSpecificPrompt}. ${STYLE_SUFFIX}.`;
 }
+
+export type ArticleForPrompt = {
+  category: 'videnskab' | 'livsstil' | 'anekdote';
+};
+
+// Kategori-baseret, ikke titel-baseret: holder stilen ensartet på tværs af mange artikler,
+// i stedet for at genere ét unikt scenarie pr. artikel.
+const ARTICLE_CATEGORY_PROMPTS: Record<ArticleForPrompt['category'], string> = {
+  videnskab:
+    'Close-up editorial still life of keto staples, butter, avocado, salmon and eggs, arranged thoughtfully on a dark stone surface',
+  livsstil:
+    'Warm editorial still life representing a keto lifestyle, fresh ingredients and a cup of coffee on a simple wooden table, morning light',
+  anekdote:
+    'Cozy Danish home dining scene, a table set with hearty food and warm light, documentary lifestyle photography',
+};
+
+export function buildArticlePrompt(article: ArticleForPrompt): string {
+  return ARTICLE_CATEGORY_PROMPTS[article.category];
+}

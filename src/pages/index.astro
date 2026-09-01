@@ -33,6 +33,9 @@ const departmentEntries = await Promise.all(
         <span class="text-xs font-medium uppercase" style="color: var(--rust);">Ugens historie</span>
       </div>
       <a href={`/artikler/${lead.slug}`} class="md:col-span-4 block group">
+        {lead.image_url && (
+          <img src={lead.image_url} alt={lead.title} class="w-full aspect-[21/9] object-cover rounded-sm mb-5" />
+        )}
         <h1 class="font-display text-4xl md:text-5xl leading-tight font-700 group-hover:opacity-80" style="color: var(--ink);">
           {lead.title}
         </h1>
@@ -43,7 +46,12 @@ const departmentEntries = await Promise.all(
   )}
 
   {anecdote && (
-    <section class="mb-16 rounded-sm p-8 md:p-10" style="background-color: var(--ink); color: var(--paper-light);">
+    <section
+      class="mb-16 rounded-sm p-8 md:p-10 relative overflow-hidden"
+      style={anecdote.image_url
+        ? `background-image: linear-gradient(rgba(43,32,22,0.75), rgba(43,32,22,0.75)), url(${anecdote.image_url}); background-size: cover; background-position: center; color: var(--paper-light);`
+        : 'background-color: var(--ink); color: var(--paper-light);'}
+    >
       <span class="text-xs font-medium uppercase" style="color: var(--paper);">Fra anekdote-serien</span>
       <p class="font-display text-2xl md:text-3xl italic leading-snug mt-3 max-w-3xl">
         "{anecdote.excerpt}"

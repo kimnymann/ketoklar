@@ -24,6 +24,7 @@ export type Article = {
   category: 'videnskab' | 'livsstil' | 'anekdote';
   excerpt: string | null;
   body: string;
+  image_url: string | null;
   locked: number;
   status: string;
   published_at: string | null;

@@ -1,5 +1,5 @@
 import { handleTestImages, type ImageEnv } from './testImages';
-import { ensureRecipeImage } from './generateImage';
+import { ensureRecipeImage, ensureArticleImage } from './generateImage';
 
 export interface Env extends ImageEnv {
   DB: D1Database;
@@ -47,29 +47,37 @@ async function publishRecipes(env: Env, count: number) {
   };
 }
 
-async function publishArticles(db: D1Database, count: number) {
-  const { results } = await db
+async function publishArticles(env: Env, count: number) {
+  const { results } = await env.DB
     .prepare(
-      `SELECT id, slug FROM articles
+      `SELECT id, slug, category FROM articles
        WHERE status = 'godkendt' AND published_at IS NULL
        ORDER BY created_at ASC
        LIMIT ?`
     )
     .bind(count)
-    .all<{ id: number; slug: string }>();
+    .all<{ id: number; slug: string; category: 'videnskab' | 'livsstil' | 'anekdote' }>();
 
   if (results.length === 0) {
-    return { published: [] as string[], warning: 'Artikelkøen er tom, ingen ny artikel at udgive.' };
+    return { published: [] as string[], warning: 'Artikelkøen er tom, ingen ny artikel at udgive.', imageWarnings: [] as string[] };
+  }
+
+  const imageWarnings: string[] = [];
+  for (const article of results) {
+    const result = await ensureArticleImage(env, article);
+    if (!result.ok) {
+      imageWarnings.push(`Billede fejlede for ${article.slug}: ${result.error}`);
+    }
   }
 
   const ids = results.map((r) => r.id);
   const placeholders = ids.map(() => '?').join(',');
-  await db
+  await env.DB
     .prepare(`UPDATE articles SET published_at = datetime('now') WHERE id IN (${placeholders})`)
     .bind(...ids)
     .run();
 
-  return { published: results.map((r) => r.slug), warning: null };
+  return { published: results.map((r) => r.slug), warning: null, imageWarnings };
 }
 
 async function runPublishing(env: Env) {
@@ -78,8 +86,8 @@ async function runPublishing(env: Env) {
   // Mandag = kør ugentlig artikel-udgivelse (UTC ugedag, 1 = mandag)
   const isMonday = new Date().getUTCDay() === 1;
   const articleResult = isMonday
-    ? await publishArticles(env.DB, ARTICLES_PER_WEEK)
-    : { published: [], warning: null };
+    ? await publishArticles(env, ARTICLES_PER_WEEK)
+    : { published: [], warning: null, imageWarnings: [] as string[] };
 
   const summary = {
     timestamp: new Date().toISOString(),
@@ -105,7 +113,7 @@ export default {
       if (!env.PUBLISH_SECRET || request.headers.get('x-publish-secret') !== env.PUBLISH_SECRET) {
         return new Response('Unauthorized', { status: 401 });
       }
-      const { results } = await env.DB
+      const { results: recipes } = await env.DB
         .prepare(
           `SELECT id, slug, title, category, ingredients_json FROM recipes
            WHERE image_status = 'mangler' AND published_at IS NOT NULL
@@ -113,12 +121,30 @@ export default {
         )
         .all<{ id: number; slug: string; title: string; category: 'morgen' | 'frokost' | 'aften' | 'laekkerier'; ingredients_json: string }>();
 
-      const outcomes = [];
-      for (const recipe of results) {
+      const recipeOutcomes = [];
+      for (const recipe of recipes) {
         const result = await ensureRecipeImage(env, recipe);
-        outcomes.push({ slug: recipe.slug, ok: result.ok, error: result.error });
+        recipeOutcomes.push({ slug: recipe.slug, ok: result.ok, error: result.error });
       }
-      return Response.json({ processed: outcomes.length, outcomes });
+
+      const { results: articles } = await env.DB
+        .prepare(
+          `SELECT id, slug, category FROM articles
+           WHERE image_status = 'mangler' AND published_at IS NOT NULL
+           ORDER BY id ASC LIMIT 20`
+        )
+        .all<{ id: number; slug: string; category: 'videnskab' | 'livsstil' | 'anekdote' }>();
+
+      const articleOutcomes = [];
+      for (const article of articles) {
+        const result = await ensureArticleImage(env, article);
+        articleOutcomes.push({ slug: article.slug, ok: result.ok, error: result.error });
+      }
+
+      return Response.json({
+        recipes: { processed: recipeOutcomes.length, outcomes: recipeOutcomes },
+        articles: { processed: articleOutcomes.length, outcomes: articleOutcomes },
+      });
     }
 
     if (url.pathname === '/test-images' && request.method === 'POST') {
