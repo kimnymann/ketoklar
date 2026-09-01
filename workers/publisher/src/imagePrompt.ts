@@ -50,6 +50,8 @@ const VISUAL_OVERRIDES: Record<string, string> = {
     'tuna mousse with visible flaked tuna texture, filled into a halved avocado, served on a plate',
   'flaeskesteg-skysovs-groenkaal':
     'sliced Danish roast pork with crispy crackling on top, dark gravy, and sautéed kale on the side',
+  'oksemoerbrad-blomkaalsmos':
+    'a pan-seared whole beef tenderloin medallion, sliced open to show a pink medium-rare center, served whole on cauliflower mash, not diced or cubed',
 };
 
 // Kun den ret-specifikke del gemmes i databasen (recipes.image_prompt).
