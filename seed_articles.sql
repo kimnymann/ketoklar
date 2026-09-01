@@ -15,6 +15,8 @@ Det kan overraske, at ketogen kost ikke er et moderne påfund. Metoden blev før
 
 Det genopstod i offentlighedens bevidsthed med Atkins-diæten i 1970''erne og 1990''erne, og fik sin nuværende form og navn i takt med, at forskningen i ketose og metabolisk sundhed voksede fra omkring 2010 og frem. Med andre ord: det er en kostform med over hundrede års klinisk historik bag sig, ikke en trend, der opstod på et opslagstavle for fem år siden.
 
+[[image:historie|Vintage 1920s style hospital kitchen still life, glass jars of butter and eggs, warm sepia tones, editorial photography]]
+
 ## Ketose, targeted keto og cyklisk keto
 
 Ikke al lavkulhydratkost er ens. Den strenge, klassiske udgave holder kulhydratindtaget meget lavt hver eneste dag, typisk under 20 til 30 gram netto kulhydrat. Nogle vælger i stedet en "targeted" udgave, hvor man tillader sig en lille smule hurtige kulhydrater omkring træning, fordi kroppen forbrænder dem hurtigt i den situation. Andre praktiserer cyklisk keto, hvor man har enkelte dage om ugen med et højere kulhydratindtag, ofte brugt af folk med et højt træningsniveau.
@@ -29,6 +31,8 @@ En af de mest sejlivede misforståelser er, at mættet fedt automatisk er farlig
 
 Det, der derimod er bred enighed om blandt forskere, er, at kvaliteten af den mad, fedtet kommer fra, betyder noget. Fedt fra rigtige fødevarer, avocado, fede fisk, æg, nødder, smør og olivenolie, er noget andet end fedt fra stærkt forarbejdede produkter. Det gælder i øvrigt, uanset hvilken kostform du følger.
 
+[[image:fedtkilder|Close-up macro photography of butter, olive oil and avocado glistening on dark stone surface]]
+
 ## Mættet og umættet fedt, hvad er forskellen
 
 Kort fortalt handler det om fedtsyrernes kemiske struktur. Mættet fedt er typisk fast ved stuetemperatur, tænk på smør eller kokosolie, mens umættet fedt typisk er flydende, som olivenolie eller fedtet i avocado og fed fisk. Begge typer indgår naturligt i en velsammensat keto kost, og der er ingen grund til at være bange for nogen af dem, når de kommer fra rigtige råvarer.
@@ -40,6 +44,8 @@ Vores [ovnbagte laks med smørsauce og broccoli](/opskrifter/ovnbagt-laks-smoers
 De fleste, der starter på en streng lavkulhydratkost, oplever de første dage som de sværeste. Symptomerne kaldes ofte for "keto-flu": træthed, hovedpine, irritabilitet og nogle gange muskelkramper. Det skyldes typisk ikke selve fedtomstillingen, men et fald i kroppens væske- og saltbalance, fordi lavere insulinniveauer får nyrerne til at udskille mere natrium.
 
 Løsningen er som regel enkel: sørg for at få nok salt, drik rigeligt vand, og overvej at supplere med magnesium og kalium i starten. De fleste oplever, at symptomerne forsvinder helt i løbet af tre til fem dage. En god kop varm hønsebouillon, som i vores [broccolisuppe med fløde](/opskrifter/broccolisuppe-floede), er faktisk en klassisk, velafprøvet måde at få både væske og salt på én gang.
+
+[[image:bouillon|Steaming cup of bone broth with salt crystals on dark stone surface, cozy warm lighting]]
 
 ## Sådan ser en typisk keto-dag ud i praksis
 
@@ -82,6 +88,8 @@ Kollegaen med rugbrødsmadpakken kigger på din bøf med bearnaisesovs, som om d
 
 Du har i øvrigt taget rester med af gårsdagens [flæskesteg med skysovs og grønkål](/opskrifter/flaeskesteg-skysovs-groenkaal), og den smager om noget bedre dagen efter, når svær og sky har fået lov at sætte sig ordentligt sammen natten over.
 
+[[image:frokost|Keto lunch box with sliced meat, cheese and greens on an office desk, natural light]]
+
 ## Familiemiddagen med fætter Michael
 
 Fætter Michael, som har læst noget på internettet, vil gerne vide, om du ikke er bange for dit kolesteroltal. Du nævner roligt, at du faktisk får taget blodprøver jævnligt, og at de ser fine ud, hvorefter samtalen hurtigt bevæger sig videre til, hvem der vandt fodboldkampen i søndags. Det er som regel sådan, det ender. Nysgerrigheden fylder mest, lige indtil man svarer roligt og uden at blive defensiv.
@@ -92,11 +100,15 @@ Fætter Michael, som har læst noget på internettet, vil gerne vide, om du ikke
 
 Manden ved siden af dig på løbebåndet er overbevist om, at du besvimer, hvis du ikke spiser en banan hvert 45. minut. Du løber videre, uden hverken banan eller besvimelse, og tænker på, at din energi faktisk har været mere stabil, siden du droppede de skarpe blodsukkersving fra hurtige kulhydrater. Det er ikke noget, du behøver forklare ham, det er bare noget, din krop allerede ved.
 
+[[image:traening|Moody dark gym scene, treadmill and water bottle, no people, editorial lifestyle photography]]
+
 ## Sommerfesten, hvor der ikke er noget til dig
 
 Der er kartoffelsalat, franskbrød og lagkage, og præcis nul ting, du kan spise uden at tænke dig om. Du tager din egen kølertaske med, fyldt med noget, du selv har lavet, for eksempel en omgang [kokosmakroner](/opskrifter/kokosmakroner), og sætter dig ned med den, som om det er den mest normale ting i verden. For dig er det det.
 
 [[recipe:kokosmakroner]]
+
+[[image:koeletaske|Cooler bag with homemade coconut macaroons outdoors, blurred summer garden party in background]]
 
 ## Lufthavnen, hvor intet er lavet til dig
 
