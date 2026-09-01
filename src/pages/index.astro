@@ -28,11 +28,9 @@ const departmentEntries = await Promise.all(
 
 <Layout title="Forside">
   {lead && (
-    <section class="mb-16 grid md:grid-cols-5 gap-8 items-start">
-      <div class="md:col-span-1 pt-2">
-        <span class="text-xs font-medium uppercase" style="color: var(--rust);">Ugens historie</span>
-      </div>
-      <a href={`/artikler/${lead.slug}`} class="md:col-span-4 block group">
+    <section class="mb-16">
+      <span class="text-xs font-medium uppercase" style="color: var(--rust);">Ugens historie</span>
+      <a href={`/artikler/${lead.slug}`} class="block group mt-2">
         {lead.image_url && (
           <img src={lead.image_url} alt={lead.title} class="w-full aspect-[21/9] object-cover rounded-sm mb-5" />
         )}
