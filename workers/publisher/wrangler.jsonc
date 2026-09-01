@@ -20,5 +20,8 @@
       "binding": "IMAGES",
       "bucket_name": "ketoklar-images"
     }
-  ]
+  ],
+  "vars": {
+    "IMAGES_PUBLIC_BASE_URL": "https://pub-ab5c905b17b94eb583d9e36baf5e185f.r2.dev"
+  }
 }
