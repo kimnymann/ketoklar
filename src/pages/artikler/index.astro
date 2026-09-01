@@ -11,21 +11,21 @@ const { results: articles } = await db
 ---
 
 <Layout title="Artikler">
-  <h1 class="text-3xl font-bold mb-6">Artikler</h1>
-  <p class="text-stone-600 mb-8">Videnskaben bag keto, og hvorfor det er den fede måde at leve på.</p>
+  <h1 class="text-3xl font-display font-600 mb-6">Artikler</h1>
+  <p class="text-[var(--ink)] mb-8">Videnskaben bag keto, og hvorfor det er den fede måde at leve på.</p>
 
   <div class="grid sm:grid-cols-2 gap-6">
     {articles.map((a) => (
-      <a href={`/artikler/${a.slug}`} class="block bg-white rounded-2xl border border-stone-200 p-6 hover:shadow-md transition relative">
+      <a href={`/artikler/${a.slug}`} class="block bg-[var(--card)] rounded-2xl border border-[var(--ink)]/15 p-6 hover:shadow-md transition relative">
         {a.locked === 1 && (
-          <span class="absolute top-4 right-4 text-xs bg-stone-900 text-white px-2 py-1 rounded-full">Kun abonnenter</span>
+          <span class="absolute top-4 right-4 text-xs bg-[var(--ink)] text-white px-2 py-1 rounded-full">Kun abonnenter</span>
         )}
-        <span class="text-xs uppercase tracking-wide text-amber-800 font-semibold">{a.category}</span>
-        <h2 class="text-lg font-bold mt-1">{a.title}</h2>
-        <p class="text-sm text-stone-500 mt-2">{a.excerpt}</p>
+        <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{a.category}</span>
+        <h2 class="text-lg font-display font-600 mt-1">{a.title}</h2>
+        <p class="text-sm text-[var(--sage)] mt-2">{a.excerpt}</p>
       </a>
     ))}
   </div>
 
-  {articles.length === 0 && <p class="text-stone-500">Ingen artikler endnu.</p>}
+  {articles.length === 0 && <p class="text-[var(--sage)]">Ingen artikler endnu.</p>}
 </Layout>

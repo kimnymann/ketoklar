@@ -6,7 +6,9 @@ interface Props {
   description?: string;
 }
 
-const { title, description = 'Ketoklar, dit univers af keto opskrifter, artikler og anekdoter.' } = Astro.props;
+const { title, description = 'Ketoklar, dit keto univers af opskrifter, artikler og anekdoter.' } = Astro.props;
+
+const today = new Intl.DateTimeFormat('da-DK', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 ---
 
 <!doctype html>
@@ -17,22 +19,28 @@ const { title, description = 'Ketoklar, dit univers af keto opskrifter, artikler
     <meta name="description" content={description} />
     <title>{title} · Ketoklar</title>
   </head>
-  <body class="bg-stone-50 text-stone-900 font-sans">
-    <header class="border-b border-stone-200 bg-white sticky top-0 z-10">
-      <nav class="max-w-5xl mx-auto flex items-center justify-between px-4 py-4">
-        <a href="/" class="text-xl font-bold tracking-tight text-amber-800">Ketoklar</a>
-        <div class="flex gap-6 text-sm font-medium text-stone-600">
-          <a href="/opskrifter" class="hover:text-amber-800">Opskrifter</a>
-          <a href="/artikler" class="hover:text-amber-800">Artikler</a>
-          <a href="/artikler/anekdoter" class="hover:text-amber-800">Anekdoter</a>
-        </div>
+  <body>
+    <div class="border-b-2 border-[var(--ink)]">
+      <div class="max-w-5xl mx-auto px-4 pt-6 pb-3 flex items-end justify-between">
+        <a href="/" class="font-display text-4xl font-700 tracking-tight" style="color: var(--ink);">Ketoklar</a>
+        <span class="hidden sm:block text-sm capitalize" style="color: var(--sage);">{today}</span>
+      </div>
+      <nav class="max-w-5xl mx-auto px-4 pb-3 flex gap-6 text-sm font-medium">
+        <a href="/opskrifter" class="hover:opacity-70">Opskrifter</a>
+        <a href="/artikler" class="hover:opacity-70">Artikler</a>
+        <a href="/artikler/anekdoter" class="hover:opacity-70">Anekdoter</a>
       </nav>
-    </header>
+    </div>
     <main class="max-w-5xl mx-auto px-4 py-10">
       <slot />
     </main>
-    <footer class="border-t border-stone-200 mt-20 py-8 text-center text-sm text-stone-500">
-      Ketoklar. Bygget med kærlighed til smør.
+    <footer class="border-t-2 mt-20 py-10" style="border-color: var(--ink);">
+      <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row justify-between gap-4">
+        <span class="font-display text-xl" style="color: var(--ink);">Ketoklar</span>
+        <p class="text-sm max-w-sm" style="color: var(--sage);">
+          Et magasin for dem, der lever på fedt og gode historier. Ny opskrift næsten hver dag, ny artikel hver uge.
+        </p>
+      </div>
     </footer>
   </body>
 </html>

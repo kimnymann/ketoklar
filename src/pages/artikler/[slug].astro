@@ -31,29 +31,29 @@ const isLocked = article.locked === 1 && !isSubscriber;
 ---
 
 <Layout title={article.title} description={article.excerpt ?? undefined}>
-  <span class="text-xs uppercase tracking-wide text-amber-800 font-semibold">{article.category}</span>
-  <h1 class="text-3xl font-bold mt-1 mb-8">{article.title}</h1>
+  <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{article.category}</span>
+  <h1 class="text-3xl font-display font-600 mt-1 mb-8">{article.title}</h1>
 
   {isLocked ? (
-    <div class="bg-stone-100 border border-stone-200 rounded-2xl p-10 text-center">
+    <div class="bg-[var(--paper-light)] border border-[var(--ink)]/15 rounded-2xl p-10 text-center">
       <p class="text-lg font-semibold mb-2">Denne artikel er kun for abonnenter.</p>
-      <p class="text-stone-500 mb-6">Bliv abonnent og få adgang til alt indhold på Ketoklar.</p>
-      <a href="/abonnement" class="inline-block bg-amber-800 text-white px-6 py-3 rounded-full font-medium hover:bg-amber-900 transition">
+      <p class="text-[var(--sage)] mb-6">Bliv abonnent og få adgang til alt indhold på Ketoklar.</p>
+      <a href="/abonnement" class="inline-block bg-[var(--rust)] text-white px-6 py-3 rounded-full font-medium hover:bg-[var(--rust-dark)] transition">
         Se abonnement
       </a>
     </div>
   ) : (
-    <div class="prose prose-stone max-w-none whitespace-pre-line">{article.body}</div>
+    <div class="max-w-2xl whitespace-pre-line leading-relaxed" style="color: var(--ink);">{article.body}</div>
   )}
 
   {relatedRecipes.length > 0 && (
-    <div class="mt-14 pt-8 border-t border-stone-200">
-      <h2 class="text-xl font-bold mb-4">Opskrifter nævnt i denne artikel</h2>
+    <div class="mt-14 pt-8 border-t border-[var(--ink)]/15">
+      <h2 class="text-xl font-display font-600 mb-4">Opskrifter nævnt i denne artikel</h2>
       <div class="grid sm:grid-cols-3 gap-4">
         {relatedRecipes.map((r) => (
-          <a href={`/opskrifter/${r.slug}`} class="block bg-white rounded-2xl border border-stone-200 p-4 hover:shadow-md transition">
-            <span class="text-xs uppercase tracking-wide text-amber-800 font-semibold">{CATEGORY_LABELS[r.category]}</span>
-            <h3 class="font-bold mt-1">{r.title}</h3>
+          <a href={`/opskrifter/${r.slug}`} class="block bg-[var(--card)] rounded-2xl border border-[var(--ink)]/15 p-4 hover:shadow-md transition">
+            <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[r.category]}</span>
+            <h3 class="font-display font-600 mt-1">{r.title}</h3>
           </a>
         ))}
       </div>

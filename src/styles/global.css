@@ -1,1 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap');
 @import "tailwindcss";
+
+:root {
+  --paper: #F2E9CE;
+  --paper-light: #F9F4E4;
+  --ink: #2B2016;
+  --rust: #B5482F;
+  --rust-dark: #8F3722;
+  --sage: #5C6B47;
+  --card: #FFFDF7;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: 'Work Sans', sans-serif;
+}
+
+.font-display {
+  font-family: 'Fraunces', serif;
+}

@@ -33,44 +33,44 @@ const isLocked = recipe.locked === 1 && !isSubscriber;
 ---
 
 <Layout title={recipe.title}>
-  <span class="text-xs uppercase tracking-wide text-amber-800 font-semibold">{CATEGORY_LABELS[recipe.category]}</span>
-  <h1 class="text-3xl font-bold mt-1 mb-4">{recipe.title}</h1>
-  <p class="text-sm text-stone-500 mb-8">
+  <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[recipe.category]}</span>
+  <h1 class="text-3xl font-display font-600 mt-1 mb-4">{recipe.title}</h1>
+  <p class="text-sm text-[var(--sage)] mb-8">
     {recipe.servings} portioner · {recipe.prep_minutes} min · {recipe.kcal} kcal pr. portion ·
     {recipe.carbs_g} g kulhydrat · {recipe.fat_g} g fedt · {recipe.protein_g} g protein
   </p>
 
   {isLocked ? (
-    <div class="bg-stone-100 border border-stone-200 rounded-2xl p-10 text-center">
+    <div class="bg-[var(--paper-light)] border border-[var(--ink)]/15 rounded-2xl p-10 text-center">
       <p class="text-lg font-semibold mb-2">Denne opskrift er kun for abonnenter.</p>
-      <p class="text-stone-500 mb-6">Bliv abonnent og få adgang til alle låste opskrifter, artikler og madplaner.</p>
-      <a href="/abonnement" class="inline-block bg-amber-800 text-white px-6 py-3 rounded-full font-medium hover:bg-amber-900 transition">
+      <p class="text-[var(--sage)] mb-6">Bliv abonnent og få adgang til alle låste opskrifter, artikler og madplaner.</p>
+      <a href="/abonnement" class="inline-block bg-[var(--rust)] text-white px-6 py-3 rounded-full font-medium hover:bg-[var(--rust-dark)] transition">
         Se abonnement
       </a>
     </div>
   ) : (
     <div class="grid md:grid-cols-3 gap-10">
       <div>
-        <h2 class="text-xl font-bold mb-3">Ingredienser</h2>
-        <ul class="space-y-1 text-stone-700">
+        <h2 class="text-xl font-display font-600 mb-3">Ingredienser</h2>
+        <ul class="space-y-1 text-[var(--ink)]">
           {ingredients.map((i) => (
             <li>{i.amount > 0 ? `${i.amount}${i.unit ? ' ' + i.unit : ''} ` : ''}{i.name}</li>
           ))}
         </ul>
       </div>
       <div class="md:col-span-2">
-        <h2 class="text-xl font-bold mb-3">Fremgangsmåde</h2>
-        <p class="text-stone-700 leading-relaxed whitespace-pre-line">{recipe.instructions}</p>
+        <h2 class="text-xl font-display font-600 mb-3">Fremgangsmåde</h2>
+        <p class="text-[var(--ink)] leading-relaxed whitespace-pre-line">{recipe.instructions}</p>
       </div>
     </div>
   )}
 
   {relatedArticles.length > 0 && (
-    <div class="mt-14 pt-8 border-t border-stone-200">
-      <h2 class="text-xl font-bold mb-4">Læs mere</h2>
+    <div class="mt-14 pt-8 border-t border-[var(--ink)]/15">
+      <h2 class="text-xl font-display font-600 mb-4">Læs mere</h2>
       <div class="flex flex-wrap gap-4">
         {relatedArticles.map((a) => (
-          <a href={`/artikler/${a.slug}`} class="text-amber-800 font-medium hover:underline">{a.title} →</a>
+          <a href={`/artikler/${a.slug}`} class="text-[var(--rust)] font-medium hover:underline">{a.title} →</a>
         ))}
       </div>
     </div>

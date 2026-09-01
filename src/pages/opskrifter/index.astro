@@ -17,14 +17,14 @@ const categories: Array<Recipe['category']> = ['morgen', 'frokost', 'aften', 'la
 ---
 
 <Layout title="Opskrifter">
-  <h1 class="text-3xl font-bold mb-6">Opskrifter</h1>
+  <h1 class="text-3xl font-display font-600 mb-6">Opskrifter</h1>
 
   <div class="flex gap-2 mb-8 flex-wrap">
-    <a href="/opskrifter" class={`px-4 py-2 rounded-full text-sm font-medium border ${!category ? 'bg-amber-800 text-white border-amber-800' : 'border-stone-300 text-stone-600'}`}>
+    <a href="/opskrifter" class={`px-4 py-2 rounded-full text-sm font-medium border ${!category ? 'bg-[var(--rust)] text-white border-[var(--rust)]' : 'border-[var(--sage)]/40 text-[var(--ink)]'}`}>
       Alle
     </a>
     {categories.map((c) => (
-      <a href={`/opskrifter?kategori=${c}`} class={`px-4 py-2 rounded-full text-sm font-medium border ${category === c ? 'bg-amber-800 text-white border-amber-800' : 'border-stone-300 text-stone-600'}`}>
+      <a href={`/opskrifter?kategori=${c}`} class={`px-4 py-2 rounded-full text-sm font-medium border ${category === c ? 'bg-[var(--rust)] text-white border-[var(--rust)]' : 'border-[var(--sage)]/40 text-[var(--ink)]'}`}>
         {CATEGORY_LABELS[c]}
       </a>
     ))}
@@ -32,16 +32,16 @@ const categories: Array<Recipe['category']> = ['morgen', 'frokost', 'aften', 'la
 
   <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
     {recipes.map((r) => (
-      <a href={`/opskrifter/${r.slug}`} class="block bg-white rounded-2xl border border-stone-200 p-5 hover:shadow-md transition relative">
+      <a href={`/opskrifter/${r.slug}`} class="block bg-[var(--card)] rounded-2xl border border-[var(--ink)]/15 p-5 hover:shadow-md transition relative">
         {r.locked === 1 && (
-          <span class="absolute top-4 right-4 text-xs bg-stone-900 text-white px-2 py-1 rounded-full">Kun abonnenter</span>
+          <span class="absolute top-4 right-4 text-xs bg-[var(--ink)] text-white px-2 py-1 rounded-full">Kun abonnenter</span>
         )}
-        <span class="text-xs uppercase tracking-wide text-amber-800 font-semibold">{CATEGORY_LABELS[r.category]}</span>
-        <h3 class="text-lg font-bold mt-1">{r.title}</h3>
-        <p class="text-sm text-stone-500 mt-2">{r.kcal} kcal · {r.carbs_g} g kulhydrat · {r.prep_minutes} min</p>
+        <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[r.category]}</span>
+        <h3 class="text-lg font-display font-600 mt-1">{r.title}</h3>
+        <p class="text-sm text-[var(--sage)] mt-2">{r.kcal} kcal · {r.carbs_g} g kulhydrat · {r.prep_minutes} min</p>
       </a>
     ))}
   </div>
 
-  {recipes.length === 0 && <p class="text-stone-500">Ingen opskrifter i denne kategori endnu.</p>}
+  {recipes.length === 0 && <p class="text-[var(--sage)]">Ingen opskrifter i denne kategori endnu.</p>}
 </Layout>

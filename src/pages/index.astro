@@ -1,55 +1,77 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { env } from "cloudflare:workers";
 import type { Recipe, Article } from '../lib/db';
 import { CATEGORY_LABELS } from '../lib/db';
 
-import { env } from "cloudflare:workers";
 const db = env.DB;
 
-const { results: recipes } = await db
-  .prepare(`SELECT * FROM recipes WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC LIMIT 6`)
-  .all<Recipe>();
+const lead = await db
+  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND category IN ('videnskab','livsstil') AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC LIMIT 1`)
+  .first<Article>();
 
-const { results: articles } = await db
-  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC LIMIT 3`)
-  .all<Article>();
+const anecdote = await db
+  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND category = 'anekdote' AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC LIMIT 1`)
+  .first<Article>();
+
+const categories: Array<Recipe['category']> = ['morgen', 'frokost', 'aften', 'laekkerier'];
+const departmentEntries = await Promise.all(
+  categories.map(async (cat) => {
+    const { results } = await db
+      .prepare(`SELECT * FROM recipes WHERE status = 'godkendt' AND category = ? AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC LIMIT 3`)
+      .bind(cat)
+      .all<Recipe>();
+    return { category: cat, recipes: results };
+  })
+);
 ---
 
 <Layout title="Forside">
-  <section class="text-center py-16">
-    <h1 class="text-4xl md:text-5xl font-bold text-stone-900 mb-4">Velkommen til dit keto univers</h1>
-    <p class="text-lg text-stone-600 max-w-xl mx-auto">
-      Opskrifter til morgen, frokost, aften og lækkerier. Artikler om videnskaben bag keto.
-      Og anekdoter, der minder dig om, hvorfor du gør det her.
-    </p>
-    <a href="/opskrifter" class="inline-block mt-8 bg-amber-800 text-white px-6 py-3 rounded-full font-medium hover:bg-amber-900 transition">
-      Find en opskrift
-    </a>
-  </section>
+  {lead && (
+    <section class="mb-16 grid md:grid-cols-5 gap-8 items-start">
+      <div class="md:col-span-1 pt-2">
+        <span class="text-xs font-medium uppercase" style="color: var(--rust);">Ugens historie</span>
+      </div>
+      <a href={`/artikler/${lead.slug}`} class="md:col-span-4 block group">
+        <h1 class="font-display text-4xl md:text-5xl leading-tight font-700 group-hover:opacity-80" style="color: var(--ink);">
+          {lead.title}
+        </h1>
+        <p class="mt-4 text-lg max-w-2xl" style="color: var(--ink);">{lead.excerpt}</p>
+        <span class="inline-block mt-4 text-sm font-medium" style="color: var(--rust);">Læs historien</span>
+      </a>
+    </section>
+  )}
 
-  <section class="py-10">
-    <h2 class="text-2xl font-bold mb-6">Seneste opskrifter</h2>
-    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-      {recipes.map((r) => (
-        <a href={`/opskrifter/${r.slug}`} class="block bg-white rounded-2xl border border-stone-200 p-5 hover:shadow-md transition">
-          <span class="text-xs uppercase tracking-wide text-amber-800 font-semibold">{CATEGORY_LABELS[r.category]}</span>
-          <h3 class="text-lg font-bold mt-1">{r.title}</h3>
-          <p class="text-sm text-stone-500 mt-2">{r.kcal} kcal · {r.carbs_g} g kulhydrat</p>
-        </a>
-      ))}
-    </div>
-  </section>
+  {anecdote && (
+    <section class="mb-16 rounded-sm p-8 md:p-10" style="background-color: var(--ink); color: var(--paper-light);">
+      <span class="text-xs font-medium uppercase" style="color: var(--paper);">Fra anekdote-serien</span>
+      <p class="font-display text-2xl md:text-3xl italic leading-snug mt-3 max-w-3xl">
+        "{anecdote.excerpt}"
+      </p>
+      <a href={`/artikler/${anecdote.slug}`} class="inline-block mt-5 text-sm font-medium underline underline-offset-4">
+        {anecdote.title}
+      </a>
+    </section>
+  )}
 
-  <section class="py-10">
-    <h2 class="text-2xl font-bold mb-6">Fra bloggen</h2>
-    <div class="grid sm:grid-cols-3 gap-6">
-      {articles.map((a) => (
-        <a href={`/artikler/${a.slug}`} class="block bg-white rounded-2xl border border-stone-200 p-5 hover:shadow-md transition">
-          <span class="text-xs uppercase tracking-wide text-amber-800 font-semibold">{a.category}</span>
-          <h3 class="text-lg font-bold mt-1">{a.title}</h3>
-          <p class="text-sm text-stone-500 mt-2">{a.excerpt}</p>
-        </a>
-      ))}
-    </div>
-  </section>
+  <div class="space-y-14">
+    {departmentEntries.map(({ category, recipes }) => recipes.length > 0 && (
+      <section>
+        <div class="flex items-baseline justify-between mb-5 border-b pb-2" style="border-color: var(--ink);">
+          <h2 class="font-display text-2xl font-600" style="color: var(--ink);">{CATEGORY_LABELS[category]}</h2>
+          <a href={`/opskrifter?kategori=${category}`} class="text-sm font-medium" style="color: var(--rust);">Se alle →</a>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-6">
+          {recipes.map((r) => (
+            <a href={`/opskrifter/${r.slug}`} class="block group">
+              <div class="aspect-[4/3] mb-3 flex items-end p-4" style="background-color: var(--sage);">
+                <span class="font-display text-lg leading-tight" style="color: var(--paper-light);">{r.title}</span>
+              </div>
+              <p class="text-sm" style="color: var(--sage);">{r.kcal} kcal · {r.carbs_g} g kulhydrat · {r.prep_minutes} min</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
 </Layout>
