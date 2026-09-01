@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import type { Recipe, Article } from '../../lib/db';
 import { CATEGORY_LABELS } from '../../lib/db';
+import { groupIngredientsByCategory, splitInstructionsIntoSteps } from '../../lib/ingredientCategory';
 
 const { slug } = Astro.params;
 import { env } from "cloudflare:workers";
@@ -17,6 +18,8 @@ if (!recipe) {
 }
 
 const ingredients = JSON.parse(recipe.ingredients_json) as Array<{ name: string; amount: number; unit: string }>;
+const ingredientGroups = groupIngredientsByCategory(ingredients);
+const steps = splitInstructionsIntoSteps(recipe.instructions);
 
 const { results: relatedArticles } = await db
   .prepare(`
@@ -57,16 +60,38 @@ const isLocked = recipe.locked === 1 && !isSubscriber;
   ) : (
     <div class="grid md:grid-cols-3 gap-10">
       <div>
-        <h2 class="text-xl font-display font-600 mb-3">Ingredienser</h2>
-        <ul class="space-y-1 text-[var(--ink)]">
-          {ingredients.map((i) => (
-            <li>{i.amount > 0 ? `${i.amount}${i.unit ? ' ' + i.unit : ''} ` : ''}{i.name}</li>
+        <h2 class="text-xl font-display font-600 mb-4">Ingredienser</h2>
+        <div class="space-y-5">
+          {ingredientGroups.map((group) => (
+            <div>
+              <h3 class="text-xs uppercase tracking-wide font-semibold mb-2" style="color: var(--rust);">{group.category}</h3>
+              <ul class="space-y-1.5 text-[var(--ink)]">
+                {group.items.map((i) => (
+                  <li class="flex items-baseline gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 mb-0.5" style="background-color: var(--sage);"></span>
+                    <span>{i.amount > 0 ? `${i.amount}${i.unit ? ' ' + i.unit : ''} ` : ''}{i.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
       <div class="md:col-span-2">
-        <h2 class="text-xl font-display font-600 mb-3">Fremgangsmåde</h2>
-        <p class="text-[var(--ink)] leading-relaxed whitespace-pre-line">{recipe.instructions}</p>
+        <h2 class="text-xl font-display font-600 mb-4">Fremgangsmåde</h2>
+        <ol class="space-y-4">
+          {steps.map((step, index) => (
+            <li class="flex gap-4">
+              <span
+                class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-display font-600"
+                style="background-color: var(--rust); color: var(--paper-light);"
+              >
+                {index + 1}
+              </span>
+              <p class="text-[var(--ink)] leading-relaxed pt-0.5">{step}</p>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   )}
