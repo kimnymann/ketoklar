@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import type { Article, Recipe } from '../../lib/db';
 import { CATEGORY_LABELS } from '../../lib/db';
 import { parseArticleBody } from '../../lib/articleBody';
+import { KETO_FOOD_LIST } from '../../lib/ketoFoodList';
 import { env } from "cloudflare:workers";
 
 const { slug } = Astro.params;
@@ -122,6 +123,38 @@ const heroColors: Record<Article['category'], string> = {
           // Mindre portræt-format, centreret ligesom kvadrat-varianten, men et andet format for variation
           return <img src={img.image_url} alt="" class="w-1/2 aspect-[3/4] object-cover rounded-sm my-6 mx-auto" loading="lazy" />;
         }
+        if (block.type === 'foodlist') {
+          return (
+            <div class="not-prose my-8 border border-[var(--ink)]/15 rounded-2xl overflow-hidden foodlist-widget bg-[var(--card)]">
+              {KETO_FOOD_LIST.map((cat, i) => (
+                <input type="radio" name="foodlist-tab" id={`fl-${i}`} checked={i === 0} />
+              ))}
+              <div class="flex">
+                {KETO_FOOD_LIST.map((cat, i) => (
+                  <label for={`fl-${i}`} class="flex-1 text-center py-3 text-sm font-medium cursor-pointer transition" style="color: var(--ink);">
+                    {cat.label}
+                  </label>
+                ))}
+              </div>
+              {KETO_FOOD_LIST.map((cat) => (
+                <div class="foodlist-panel p-5">
+                  <div class="space-y-4">
+                    {cat.groups.map((g) => (
+                      <div>
+                        <h4 class="text-xs uppercase tracking-wide font-semibold mb-2" style="color: var(--rust);">{g.heading}</h4>
+                        <div class="flex flex-wrap gap-2">
+                          {g.items.map((item) => (
+                            <span class="text-xs px-2 py-1 rounded-full border border-[var(--ink)]/20" style="color: var(--ink);">{item}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        }
         return <p set:html={block.html} />;
       })}
     </div>
@@ -141,3 +174,14 @@ const heroColors: Record<Article['category'], string> = {
     </div>
   )}
 </Layout>
+
+<style>
+  .foodlist-widget input { display: none; }
+  .foodlist-widget .foodlist-panel { display: none; }
+  .foodlist-widget input:nth-of-type(1):checked ~ .flex label:nth-of-type(1) { background-color: var(--rust); color: var(--paper-light); }
+  .foodlist-widget input:nth-of-type(2):checked ~ .flex label:nth-of-type(2) { background-color: var(--sage); color: var(--paper-light); }
+  .foodlist-widget input:nth-of-type(3):checked ~ .flex label:nth-of-type(3) { background-color: var(--ink); color: var(--paper-light); }
+  .foodlist-widget input:nth-of-type(1):checked ~ .foodlist-panel:nth-of-type(2) { display: block; }
+  .foodlist-widget input:nth-of-type(2):checked ~ .foodlist-panel:nth-of-type(3) { display: block; }
+  .foodlist-widget input:nth-of-type(3):checked ~ .foodlist-panel:nth-of-type(4) { display: block; }
+</style>
