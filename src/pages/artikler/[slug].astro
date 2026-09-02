@@ -131,7 +131,7 @@ const heroColors: Record<Article['category'], string> = {
               ))}
               <div class="flex">
                 {KETO_FOOD_LIST.map((cat, i) => (
-                  <label for={`fl-${i}`} class="flex-1 text-center py-3 text-sm font-medium cursor-pointer transition text-[var(--ink)]">
+                  <label for={`fl-${i}`} class="foodlist-tab-label flex-1 text-center py-3 text-sm font-medium cursor-pointer transition">
                     {cat.label}
                   </label>
                 ))}
@@ -178,9 +178,10 @@ const heroColors: Record<Article['category'], string> = {
 <style>
   .foodlist-widget input { display: none; }
   .foodlist-widget .foodlist-panel { display: none; }
-  .foodlist-widget input:nth-of-type(1):checked ~ .flex label:nth-of-type(1) { background-color: var(--rust); color: var(--paper-light); }
-  .foodlist-widget input:nth-of-type(2):checked ~ .flex label:nth-of-type(2) { background-color: var(--sage); color: var(--paper-light); }
-  .foodlist-widget input:nth-of-type(3):checked ~ .flex label:nth-of-type(3) { background-color: var(--ink); color: var(--paper-light); }
+  .foodlist-widget .foodlist-tab-label { color: var(--ink); }
+  .foodlist-widget input:nth-of-type(1):checked ~ .flex label:nth-of-type(1) { background-color: var(--rust); color: var(--paper-light) !important; }
+  .foodlist-widget input:nth-of-type(2):checked ~ .flex label:nth-of-type(2) { background-color: var(--sage); color: var(--paper-light) !important; }
+  .foodlist-widget input:nth-of-type(3):checked ~ .flex label:nth-of-type(3) { background-color: var(--ink); color: var(--paper-light) !important; }
   .foodlist-widget input:nth-of-type(1):checked ~ .foodlist-panel:nth-of-type(2) { display: block; }
   .foodlist-widget input:nth-of-type(2):checked ~ .foodlist-panel:nth-of-type(3) { display: block; }
   .foodlist-widget input:nth-of-type(3):checked ~ .foodlist-panel:nth-of-type(4) { display: block; }
