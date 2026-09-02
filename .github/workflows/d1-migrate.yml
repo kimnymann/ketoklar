@@ -33,6 +33,13 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: d1 execute DB --remote --file=./seed_recipes.sql
 
+      - name: Seed opskrifter, batch 2 (kun nye rækker pga. UNIQUE slug)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute DB --remote --file=./seed_recipes_batch2.sql
+
       - name: Seed artikler
         uses: cloudflare/wrangler-action@v3
         with:
