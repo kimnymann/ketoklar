@@ -14,6 +14,11 @@ const anecdote = await db
   .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND category = 'anekdote' AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC LIMIT 1`)
   .first<Article>();
 
+const { results: recentArticles } = await db
+  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') AND id != ? ORDER BY published_at DESC LIMIT 6`)
+  .bind(lead?.id ?? -1)
+  .all<Article>();
+
 const categories: Array<Recipe['category']> = ['morgen', 'frokost', 'aften', 'laekkerier'];
 const departmentEntries = await Promise.all(
   categories.map(async (cat) => {
@@ -57,6 +62,28 @@ const departmentEntries = await Promise.all(
       <a href={`/artikler/${anecdote.slug}`} class="inline-block mt-5 text-sm font-medium underline underline-offset-4">
         {anecdote.title}
       </a>
+    </section>
+  )}
+
+  {recentArticles.length > 0 && (
+    <section class="mb-16">
+      <div class="flex items-baseline justify-between mb-5 border-b pb-2" style="border-color: var(--ink);">
+        <h2 class="font-display text-2xl font-600" style="color: var(--ink);">Seneste artikler</h2>
+        <a href="/artikler" class="text-sm font-medium" style="color: var(--rust);">Se alle artikler →</a>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-6">
+        {recentArticles.map((a) => (
+          <a href={`/artikler/${a.slug}`} class="block group">
+            {a.image_url ? (
+              <img src={a.image_url} alt={a.title} class="aspect-[16/9] w-full object-cover mb-3 rounded-sm" loading="lazy" />
+            ) : (
+              <div class="aspect-[16/9] mb-3 rounded-sm" style="background-color: var(--sage);"></div>
+            )}
+            <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--rust);">{a.category}</span>
+            <h3 class="font-display font-600 mt-1" style="color: var(--ink);">{a.title}</h3>
+          </a>
+        ))}
+      </div>
     </section>
   )}
 
