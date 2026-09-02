@@ -113,8 +113,9 @@ export default {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/backfill-images' && request.method === 'POST') {
-      if (!env.PUBLISH_SECRET || request.headers.get('x-publish-secret') !== env.PUBLISH_SECRET) {
+    if (url.pathname === '/backfill-images' && (request.method === 'POST' || request.method === 'GET')) {
+      const secret = request.headers.get('x-publish-secret') ?? url.searchParams.get('secret');
+      if (!env.PUBLISH_SECRET || secret !== env.PUBLISH_SECRET) {
         return new Response('Unauthorized', { status: 401 });
       }
       const { results: recipes } = await env.DB
