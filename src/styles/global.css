@@ -84,7 +84,7 @@ img { display: block; }
   .edition-bar__dot { display: none; }
   .site-header__inner { grid-template-columns: 1fr auto; min-height: 5rem; }
   .site-nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; width: 100%; padding: .35rem 0 .8rem; border-top: 1px solid rgba(16, 35, 26, .15); }
-  .start-link { padding: .62rem .8rem; }
+  .start-link { display: none; }
   .site-footer__top { grid-template-columns: 1fr; gap: 2rem; }
   .site-footer__bottom { align-items: flex-start; flex-direction: column; }
   .company-signature { flex-wrap: wrap; row-gap: .45rem; }
