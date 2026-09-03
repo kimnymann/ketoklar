@@ -6,43 +6,75 @@ export interface Env extends ImageEnv {
   PUBLISH_SECRET?: string;
 }
 
-const RECIPES_PER_DAY = 2;
 const ARTICLES_PER_WEEK = 1;
+const RECIPE_CATEGORY_ROTATION = ['morgen', 'frokost', 'aften', 'laekkerier'] as const;
 
-async function publishRecipes(env: Env, count: number) {
-  const { results } = await env.DB
-    .prepare(
-      `SELECT id, slug, title, category, ingredients_json FROM recipes
-       WHERE status = 'godkendt' AND published_at IS NULL
-       ORDER BY created_at ASC
-       LIMIT ?`
-    )
-    .bind(count)
-    .all<{ id: number; slug: string; title: string; category: 'morgen' | 'frokost' | 'aften' | 'laekkerier'; ingredients_json: string }>();
+type RecipeQueueItem = {
+  id: number;
+  slug: string;
+  title: string;
+  category: typeof RECIPE_CATEGORY_ROTATION[number];
+  ingredients_json: string;
+};
 
-  if (results.length === 0) {
+async function publishRecipes(env: Env) {
+  // Et manuelt kald må ikke kunne lægge endnu en opskrift ud samme UTC-dag.
+  const publishedToday = await env.DB
+    .prepare(`SELECT COUNT(*) AS count FROM recipes WHERE published_at >= date('now')`)
+    .first<{ count: number }>();
+
+  if ((publishedToday?.count ?? 0) > 0) {
+    return {
+      published: [] as string[],
+      warning: 'Dagens opskrift er allerede udgivet.',
+      imageWarnings: [] as string[],
+    };
+  }
+
+  const lastPublished = await env.DB
+    .prepare(`SELECT category FROM recipes WHERE published_at IS NOT NULL ORDER BY published_at DESC, id DESC LIMIT 1`)
+    .first<{ category: RecipeQueueItem['category'] }>();
+
+  const lastIndex = lastPublished ? RECIPE_CATEGORY_ROTATION.indexOf(lastPublished.category) : -1;
+  const categoriesInPriorityOrder = RECIPE_CATEGORY_ROTATION.map(
+    (_, offset) => RECIPE_CATEGORY_ROTATION[(lastIndex + 1 + offset) % RECIPE_CATEGORY_ROTATION.length]
+  );
+
+  let recipe: RecipeQueueItem | null = null;
+  for (const category of categoriesInPriorityOrder) {
+    recipe = await env.DB
+      .prepare(
+        `SELECT id, slug, title, category, ingredients_json FROM recipes
+         WHERE status = 'godkendt' AND published_at IS NULL AND category = ?
+         ORDER BY created_at ASC, id ASC
+         LIMIT 1`
+      )
+      .bind(category)
+      .first<RecipeQueueItem>();
+
+    if (recipe) break;
+  }
+
+  if (!recipe) {
     return { published: [] as string[], warning: 'Opskriftskøen er tom, ingen nye opskrifter at udgive.', imageWarnings: [] as string[] };
   }
 
-  // Generér billede for hver opskrift, FØR den går live, så intet publiceres uden billede.
+  // Generér billedet, FØR opskriften går live.
   const imageWarnings: string[] = [];
-  for (const recipe of results) {
-    const result = await ensureRecipeImage(env, recipe);
-    if (!result.ok) {
-      imageWarnings.push(`Billede fejlede for ${recipe.slug}: ${result.error}`);
-    }
+  const imageResult = await ensureRecipeImage(env, recipe);
+  if (!imageResult.ok) {
+    imageWarnings.push(`Billede fejlede for ${recipe.slug}: ${imageResult.error}`);
   }
 
-  const ids = results.map((r) => r.id);
-  const placeholders = ids.map(() => '?').join(',');
   await env.DB
-    .prepare(`UPDATE recipes SET published_at = datetime('now') WHERE id IN (${placeholders})`)
-    .bind(...ids)
+    .prepare(`UPDATE recipes SET published_at = datetime('now') WHERE id = ? AND published_at IS NULL`)
+    .bind(recipe.id)
     .run();
 
   return {
-    published: results.map((r) => r.slug),
-    warning: results.length < count ? `Kun ${results.length} af ${count} ønskede opskrifter var klar i køen.` : null,
+    published: [recipe.slug],
+    category: recipe.category,
+    warning: null,
     imageWarnings,
   };
 }
@@ -85,7 +117,7 @@ async function publishArticles(env: Env, count: number) {
 }
 
 async function runPublishing(env: Env) {
-  const recipeResult = await publishRecipes(env, RECIPES_PER_DAY);
+  const recipeResult = await publishRecipes(env);
 
   // Mandag = kør ugentlig artikel-udgivelse (UTC ugedag, 1 = mandag)
   const isMonday = new Date().getUTCDay() === 1;
