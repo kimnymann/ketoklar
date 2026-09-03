@@ -63,7 +63,7 @@ const heroColors: Record<Article['category'], string> = {
     </div>
   )}
   {article.image_url && (
-    <div class="mb-8">
+    <div class="max-w-3xl mx-auto mb-8">
       <div class="flex items-baseline justify-between">
         <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--rust);">{article.category}</span>
         <span class="text-xs" style="color: var(--sage);">{formatPublishedDate(article.published_at)}</span>
@@ -81,7 +81,7 @@ const heroColors: Record<Article['category'], string> = {
       </a>
     </div>
   ) : (
-    <div class="max-w-2xl leading-relaxed space-y-5" style="color: var(--ink);">
+    <div class="max-w-3xl mx-auto leading-relaxed space-y-5" style="color: var(--ink);">
       {blocks.map((block) => {
         if (block.type === 'heading') {
           return <h2 class="font-display text-xl font-600 pt-3" style="color: var(--ink);">{block.text}</h2>;
@@ -167,7 +167,7 @@ const heroColors: Record<Article['category'], string> = {
   )}
 
   {relatedRecipes.length > 0 && (
-    <div class="mt-14 pt-8 border-t border-[var(--ink)]/15">
+    <div class="max-w-3xl mx-auto mt-14 pt-8 border-t border-[var(--ink)]/15">
       <h2 class="text-xl font-display font-600 mb-4">Alle opskrifter nævnt i denne artikel</h2>
       <div class="grid sm:grid-cols-3 gap-4">
         {relatedRecipes.map((r) => (
