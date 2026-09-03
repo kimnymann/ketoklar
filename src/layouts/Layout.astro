@@ -1,12 +1,14 @@
 ---
 import '../styles/global.css';
+import BrandMark from '../components/BrandMark.astro';
 
 interface Props {
   title: string;
   description?: string;
+  wide?: boolean;
 }
 
-const { title, description = 'Ketoklar, dit keto univers af opskrifter, artikler og anekdoter.' } = Astro.props;
+const { title, description = 'Ketoklar, dit keto univers af opskrifter, artikler og anekdoter.', wide = false } = Astro.props;
 
 const today = new Intl.DateTimeFormat('da-DK', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 ---
@@ -20,27 +22,61 @@ const today = new Intl.DateTimeFormat('da-DK', { weekday: 'long', day: 'numeric'
     <title>{title} · Ketoklar</title>
   </head>
   <body>
-    <div class="border-b-2 border-[var(--ink)]">
-      <div class="max-w-5xl mx-auto px-4 pt-6 pb-3 flex items-end justify-between">
-        <a href="/" class="font-display text-4xl font-700 tracking-tight" style="color: var(--ink);">Ketoklar</a>
-        <span class="hidden sm:block text-sm capitalize" style="color: var(--sage);">{today}</span>
+    <div class="edition-bar">
+      <div class="site-frame edition-bar__inner">
+        <span>Danmarks sultneste ketomagasin</span>
+        <span class="edition-bar__dot" aria-hidden="true"></span>
+        <span class="capitalize">{today}</span>
       </div>
-      <nav class="max-w-5xl mx-auto px-4 pb-3 flex gap-6 text-sm font-medium">
-        <a href="/opskrifter" class="hover:opacity-70">Opskrifter</a>
-        <a href="/artikler" class="hover:opacity-70">Artikler</a>
-        <a href="/artikler/anekdoter" class="hover:opacity-70">Anekdoter</a>
-      </nav>
     </div>
-    <main class="max-w-5xl mx-auto px-4 py-10">
+    <header class="site-header">
+      <div class="site-frame site-header__inner">
+        <a href="/" class="site-logo"><BrandMark /></a>
+        <nav class="site-nav" aria-label="Primær navigation">
+          <a href="/opskrifter">Opskrifter</a>
+          <a href="/artikler">Artikler</a>
+          <a href="/artikler/anekdoter">Anekdoter</a>
+        </nav>
+        <a href="/artikler/keto-for-begyndere-guide" class="start-link">Start her <span aria-hidden="true">→</span></a>
+      </div>
+    </header>
+    <main class:list={["page-main", { "page-main--wide": wide }] }>
       <slot />
     </main>
-    <footer class="border-t-2 mt-20 py-10" style="border-color: var(--ink);">
-      <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row justify-between gap-4">
-        <span class="font-display text-xl" style="color: var(--ink);">Ketoklar</span>
-        <p class="text-sm max-w-sm" style="color: var(--sage);">
-          Et magasin for dem, der lever på fedt og gode historier. Ny opskrift næsten hver dag, ny artikel hver uge.
-        </p>
+    <footer class="site-footer">
+      <div class="site-frame site-footer__top">
+        <BrandMark light />
+        <p>Et magasin for dem, der lever på fedt, nysgerrighed og virkelig gode historier.</p>
+        <a href="/opskrifter">Find aftensmaden <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="site-frame site-footer__bottom">
+        <div class="company-signature">
+          <strong>Ketoklar</strong>
+          <span class="company-signature__stripe" aria-hidden="true"></span>
+          <span>en del af</span>
+          <strong class="company-signature__group">SAX GRUPPEN</strong>
+          <i aria-hidden="true"></i>
+          <span>CVR 38239031</span>
+        </div>
+        <span>Ny opskrift næsten hver dag</span>
       </div>
     </footer>
+
+    <script>
+      const revealItems = document.querySelectorAll('[data-reveal]');
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+        revealItems.forEach((item) => observer.observe(item));
+      } else {
+        revealItems.forEach((item) => item.classList.add('is-visible'));
+      }
+    </script>
   </body>
 </html>

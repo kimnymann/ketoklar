@@ -1,5 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import RecipeCard from '../components/RecipeCard.astro';
+import SectionHeading from '../components/SectionHeading.astro';
 import { env } from "cloudflare:workers";
 import type { Recipe, Article } from '../lib/db';
 import { CATEGORY_LABELS } from '../lib/db';
@@ -15,7 +17,7 @@ const anecdote = await db
   .first<Article>();
 
 const { results: recentArticles } = await db
-  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') AND id != ? ORDER BY published_at DESC LIMIT 6`)
+  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') AND id != ? ORDER BY published_at DESC LIMIT 5`)
   .bind(lead?.id ?? -1)
   .all<Article>();
 
@@ -29,85 +31,196 @@ const departmentEntries = await Promise.all(
     return { category: cat, recipes: results };
   })
 );
+
+const featuredRecipes = departmentEntries.flatMap((entry) => entry.recipes.slice(0, 1));
 ---
 
-<Layout title="Forside">
+<Layout title="Forside" wide>
+  <div class="home-intro site-frame">
+    <p data-reveal>Keto uden løftede pegefingre</p>
+    <span data-reveal>Opskrifter, viden og historier for mennesker, der godt kan lide rigtig mad.</span>
+  </div>
+
   {lead && (
-    <section class="mb-16">
-      <span class="text-xs font-medium uppercase" style="color: var(--rust);">Ugens historie</span>
-      <a href={`/artikler/${lead.slug}`} class="block group mt-2">
-        {lead.image_url && (
-          <img src={lead.image_url} alt={lead.title} class="w-full aspect-[21/9] object-cover rounded-sm mb-5" />
-        )}
-        <h1 class="font-display text-4xl md:text-5xl leading-tight font-700 group-hover:opacity-80" style="color: var(--ink);">
-          {lead.title}
-        </h1>
-        <p class="mt-4 text-lg max-w-2xl" style="color: var(--ink);">{lead.excerpt}</p>
-        <span class="inline-block mt-4 text-sm font-medium" style="color: var(--rust);">Læs historien</span>
+    <section class="hero site-frame" data-reveal>
+      <a href={`/artikler/${lead.slug}`} class="hero__image-link" aria-label={`Læs ${lead.title}`}>
+        {lead.image_url ? <img src={lead.image_url} alt={lead.title} class="hero__image" /> : <div class="hero__image hero__image--empty"></div>}
+        <span class="hero__badge">Ugens historie</span>
+        <span class="hero__image-word" aria-hidden="true">KLAR</span>
       </a>
+      <div class="hero__copy">
+        <span class="hero__kicker">{lead.category} / 01</span>
+        <h1><a href={`/artikler/${lead.slug}`}>{lead.title}</a></h1>
+        <p>{lead.excerpt}</p>
+        <a href={`/artikler/${lead.slug}`} class="hero__cta">Læs historien <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+  )}
+
+  <div class="ticker" aria-label="Ketoklar emner">
+    <div class="ticker__track">
+      {[0, 1].map(() => (
+        <div class="ticker__set" aria-hidden="true">
+          <span>Smør på panden</span><i>✦</i><span>Kulhydrat ned</span><i>✦</i><span>Smagen op</span><i>✦</i><span>Ingen madpanik</span><i>✦</i>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  {featuredRecipes.length > 0 && (
+    <section class="recipe-feature site-frame">
+      <SectionHeading eyebrow="Spis nu" title="Fire måltider. Nul kedelige valg." href="/opskrifter" linkLabel="Alle opskrifter" />
+      <div class="recipe-feature__grid">
+        {featuredRecipes.map((recipe, index) => <RecipeCard recipe={recipe} index={index} />)}
+      </div>
     </section>
   )}
 
   {anecdote && (
-    <section
-      class="mb-16 rounded-sm p-8 md:p-10 relative overflow-hidden"
-      style={anecdote.image_url
-        ? `background-image: linear-gradient(rgba(43,32,22,0.75), rgba(43,32,22,0.75)), url(${anecdote.image_url}); background-size: cover; background-position: center; color: var(--paper-light);`
-        : 'background-color: var(--ink); color: var(--paper-light);'}
-    >
-      <span class="text-xs font-medium uppercase" style="color: var(--paper);">Fra anekdote-serien</span>
-      <p class="font-display text-2xl md:text-3xl italic leading-snug mt-3 max-w-3xl">
-        "{anecdote.excerpt}"
-      </p>
-      <a href={`/artikler/${anecdote.slug}`} class="inline-block mt-5 text-sm font-medium underline underline-offset-4">
-        {anecdote.title}
-      </a>
+    <section class="story-break">
+      <div class="story-break__inner site-frame">
+        <div class="story-break__label" data-reveal>
+          <span>Uden filter</span>
+          <strong>Anekdote<br />nr. 01</strong>
+        </div>
+        <div class="story-break__quote" data-reveal>
+          <span class="story-break__mark" aria-hidden="true">“</span>
+          <blockquote>{anecdote.excerpt}</blockquote>
+          <a href={`/artikler/${anecdote.slug}`}>{anecdote.title} <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="story-break__shape" aria-hidden="true">
+          <svg viewBox="0 0 180 210">
+            <path d="M91 5c26 30 67 41 81 81 15 45-8 100-54 116-45 15-95-13-109-58C-5 99 26 71 47 49 63 32 74 18 91 5Z" />
+            <path d="M42 125c30-22 69-34 104-21M55 155c25-15 53-23 82-21" />
+          </svg>
+        </div>
+      </div>
     </section>
   )}
 
   {recentArticles.length > 0 && (
-    <section class="mb-16">
-      <div class="flex items-baseline justify-between mb-5 border-b pb-2" style="border-color: var(--ink);">
-        <h2 class="font-display text-2xl font-600" style="color: var(--ink);">Seneste artikler</h2>
-        <a href="/artikler" class="text-sm font-medium" style="color: var(--rust);">Se alle artikler →</a>
-      </div>
-      <div class="grid sm:grid-cols-3 gap-6">
-        {recentArticles.map((a) => (
-          <a href={`/artikler/${a.slug}`} class="block group">
-            {a.image_url ? (
-              <img src={a.image_url} alt={a.title} class="aspect-[16/9] w-full object-cover mb-3 rounded-sm" loading="lazy" />
-            ) : (
-              <div class="aspect-[16/9] mb-3 rounded-sm" style="background-color: var(--sage);"></div>
-            )}
-            <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--rust);">{a.category}</span>
-            <h3 class="font-display font-600 mt-1" style="color: var(--ink);">{a.title}</h3>
+    <section class="journal site-frame">
+      <SectionHeading eyebrow="Bliv klogere" title="Fra magasinet" href="/artikler" linkLabel="Alle artikler" />
+      <div class="journal__grid">
+        {recentArticles.map((article, index) => (
+          <a href={`/artikler/${article.slug}`} class:list={["journal-card", { "journal-card--lead": index === 0 }]} data-reveal style={`--delay: ${index * 60}ms`}>
+            <div class="journal-card__image-wrap">
+              {article.image_url ? <img src={article.image_url} alt={article.title} loading="lazy" /> : <div class="journal-card__placeholder"></div>}
+              <span>{article.category}</span>
+            </div>
+            <small>0{index + 1} / Læsning</small>
+            <h3>{article.title}</h3>
+            {index === 0 && article.excerpt && <p>{article.excerpt}</p>}
           </a>
         ))}
       </div>
     </section>
   )}
 
-  <div class="space-y-14">
-    {departmentEntries.map(({ category, recipes }) => recipes.length > 0 && (
-      <section>
-        <div class="flex items-baseline justify-between mb-5 border-b pb-2" style="border-color: var(--ink);">
-          <h2 class="font-display text-2xl font-600" style="color: var(--ink);">{CATEGORY_LABELS[category]}</h2>
-          <a href={`/opskrifter?kategori=${category}`} class="text-sm font-medium" style="color: var(--rust);">Se alle →</a>
-        </div>
-        <div class="grid sm:grid-cols-3 gap-6">
-          {recipes.map((r) => (
-            <a href={`/opskrifter/${r.slug}`} class="block group">
-              {r.image_url ? (
-                <img src={r.image_url} alt={r.title} class="aspect-[4/3] w-full object-cover mb-3 rounded-sm" loading="lazy" />
-              ) : (
-                <div class="aspect-[4/3] mb-3 rounded-sm" style="background-color: var(--sage);"></div>
-              )}
-              <h3 class="font-display font-600" style="color: var(--ink);">{r.title}</h3>
-              <p class="text-sm" style="color: var(--sage);">{r.kcal} kcal · {r.carbs_g} g kulhydrat · {r.prep_minutes} min</p>
-            </a>
-          ))}
-        </div>
-      </section>
-    ))}
-  </div>
+  <section class="departments site-frame">
+    <SectionHeading eyebrow="Hele dagen" title="Gå på opdagelse" href="/opskrifter" linkLabel="Se opskrifter" />
+    <div class="departments__list">
+      {departmentEntries.map(({ category, recipes }, index) => recipes.length > 0 && (
+        <a href={`/opskrifter?kategori=${category}`} class="department" data-reveal>
+          <span class="department__number">0{index + 1}</span>
+          <h3>{CATEGORY_LABELS[category]}</h3>
+          <span class="department__titles">{recipes.map((recipe) => recipe.title).join(' · ')}</span>
+          <span class="department__arrow" aria-hidden="true">↗</span>
+        </a>
+      ))}
+    </div>
+  </section>
 </Layout>
+
+<style>
+  .home-intro { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding-block: 1.2rem; color: var(--muted); font-size: .67rem; font-weight: 700; letter-spacing: .1em; }
+  .home-intro p { color: var(--tomato-dark); text-transform: uppercase; }
+  .home-intro span { max-width: 31rem; text-align: right; letter-spacing: 0; font-weight: 500; }
+  .hero { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(21rem, .75fr); min-height: 41rem; overflow: hidden; border-radius: var(--radius-lg); color: var(--cream); background: var(--forest); }
+  .hero__image-link { position: relative; min-height: 34rem; overflow: hidden; }
+  .hero__image { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s cubic-bezier(.15,.75,.2,1); }
+  .hero:hover .hero__image { transform: scale(1.025); }
+  .hero__image--empty { background: var(--muted); }
+  .hero__image-link::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(16,35,26,.45)); }
+  .hero__badge { position: absolute; z-index: 2; top: 1.25rem; left: 1.25rem; padding: .72rem 1rem; border-radius: 999px; color: var(--ink); background: var(--lime); font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .hero__image-word { position: absolute; z-index: 2; right: -1.6rem; bottom: -1.2rem; color: rgba(255,250,240,.86); font-family: var(--font-display); font-size: clamp(5rem, 12vw, 10.5rem); font-style: italic; font-weight: 600; letter-spacing: -.09em; line-height: .75; }
+  .hero__copy { display: flex; flex-direction: column; justify-content: center; padding: clamp(2rem, 5vw, 4.5rem); }
+  .hero__kicker { margin-bottom: 1.5rem; color: var(--lime); font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+  .hero h1 { max-width: 10ch; font-family: var(--font-display); font-size: clamp(3rem, 5.2vw, 5.6rem); font-weight: 500; letter-spacing: -.065em; line-height: .86; }
+  .hero__copy > p { max-width: 30rem; margin-top: 1.6rem; color: rgba(255,250,240,.78); font-size: .95rem; line-height: 1.6; }
+  .hero__cta { align-self: flex-start; display: inline-flex; align-items: center; gap: 1rem; margin-top: 2rem; padding-bottom: .35rem; border-bottom: 1px solid var(--lime); color: var(--lime); font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .ticker { margin-top: clamp(2rem, 4vw, 3rem); overflow: hidden; color: var(--ink); background: var(--lime); transform: rotate(-1deg) scale(1.01); }
+  .ticker__track { display: flex; width: max-content; animation: ticker 28s linear infinite; }
+  .ticker__set { display: flex; align-items: center; flex-shrink: 0; gap: 2rem; padding: .85rem 1rem; font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; }
+  .ticker i { color: var(--tomato); font-style: normal; }
+  @keyframes ticker { to { transform: translateX(-50%); } }
+  .recipe-feature, .journal, .departments { padding-top: clamp(6rem, 11vw, 10rem); }
+  .recipe-feature__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+  .recipe-feature__grid > :nth-child(even) { margin-top: 3.5rem; }
+  .story-break { position: relative; margin-top: clamp(6rem, 11vw, 10rem); overflow: hidden; color: var(--ink); background: var(--sky); }
+  .story-break__inner { position: relative; display: grid; grid-template-columns: 12rem minmax(0, 1fr) 13rem; gap: clamp(2rem, 5vw, 6rem); align-items: center; min-height: 34rem; padding-block: clamp(4rem, 8vw, 7rem); }
+  .story-break__label span { display: inline-block; margin-bottom: 1rem; padding: .5rem .7rem; border-radius: 999px; color: var(--cream); background: var(--tomato); font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .story-break__label strong { display: block; font-size: .72rem; letter-spacing: .12em; line-height: 1.5; text-transform: uppercase; }
+  .story-break__quote { position: relative; z-index: 2; }
+  .story-break__mark { position: absolute; top: -4.5rem; left: -2.5rem; color: var(--tomato); font-family: var(--font-display); font-size: 10rem; line-height: 1; opacity: .9; }
+  blockquote { position: relative; margin: 0; font-family: var(--font-display); font-size: clamp(2.5rem, 5vw, 5rem); font-style: italic; font-weight: 500; letter-spacing: -.055em; line-height: .96; }
+  .story-break__quote a { display: inline-flex; gap: .75rem; margin-top: 2rem; padding-bottom: .3rem; border-bottom: 1px solid currentColor; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .story-break__shape svg { width: 100%; overflow: visible; }
+  .story-break__shape path:first-child { fill: var(--lime); }
+  .story-break__shape path:last-child { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+  .journal__grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 3rem 1.25rem; }
+  .journal-card--lead { grid-row: span 2; }
+  .journal-card__image-wrap { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--radius-md); background: var(--forest); }
+  .journal-card--lead .journal-card__image-wrap { aspect-ratio: 4 / 5; }
+  .journal-card img, .journal-card__placeholder { width: 100%; height: 100%; object-fit: cover; transition: transform .65s ease; }
+  .journal-card:hover img { transform: scale(1.04); }
+  .journal-card__image-wrap span { position: absolute; top: .8rem; left: .8rem; padding: .45rem .65rem; border-radius: 999px; color: var(--ink); background: var(--paper-light); font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .journal-card small { display: block; margin-top: .75rem; color: var(--tomato-dark); font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .journal-card h3 { margin-top: .35rem; font-family: var(--font-display); font-size: clamp(1.35rem, 2.5vw, 2.25rem); font-weight: 600; letter-spacing: -.04em; line-height: 1.02; }
+  .journal-card--lead h3 { font-size: clamp(2rem, 4vw, 3.6rem); }
+  .journal-card p { margin-top: .8rem; color: var(--muted); font-size: .88rem; line-height: 1.55; }
+  .departments { padding-bottom: 2rem; }
+  .departments__list { border-top: 1px solid rgba(16,35,26,.25); }
+  .department { display: grid; grid-template-columns: 3rem minmax(12rem, .7fr) 1fr auto; align-items: center; gap: 2rem; padding: 1.4rem .4rem; border-bottom: 1px solid rgba(16,35,26,.25); transition: padding .25s ease, color .25s ease, background .25s ease; }
+  .department:hover { padding-inline: 1.25rem; color: var(--cream); background: var(--forest); }
+  .department__number { color: var(--tomato-dark); font-size: .7rem; font-weight: 700; }
+  .department h3 { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.6rem); font-weight: 600; letter-spacing: -.05em; }
+  .department__titles { color: var(--muted); font-size: .74rem; line-height: 1.5; }
+  .department:hover .department__titles, .department:hover .department__number { color: var(--lime); }
+  .department__arrow { font-size: 1.8rem; }
+
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero__image-link { min-height: 55vw; }
+    .hero__copy { min-height: 29rem; }
+    .hero h1 { max-width: 14ch; }
+    .recipe-feature__grid { grid-template-columns: repeat(2, 1fr); gap: 2.5rem 1.25rem; }
+    .recipe-feature__grid > :nth-child(even) { margin-top: 0; }
+    .story-break__inner { grid-template-columns: 8rem 1fr; }
+    .story-break__shape { display: none; }
+    .journal__grid { grid-template-columns: 1fr 1fr; }
+    .journal-card--lead { grid-row: auto; grid-column: 1 / -1; display: grid; grid-template-columns: 1.1fr 1fr; column-gap: 1.5rem; }
+    .journal-card--lead .journal-card__image-wrap { grid-row: 1 / 5; aspect-ratio: 4 / 3; }
+  }
+
+  @media (max-width: 640px) {
+    .home-intro { align-items: flex-start; }
+    .home-intro span { display: none; }
+    .hero { width: 100%; border-radius: 0; }
+    .hero__image-link { min-height: 68vw; }
+    .hero__image-word { right: -.4rem; font-size: 25vw; }
+    .hero__copy { min-height: 30rem; padding: 2.2rem 1.25rem 3rem; }
+    .hero h1 { font-size: clamp(3.2rem, 15vw, 5rem); }
+    .recipe-feature__grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; margin-right: -1rem; padding-right: 1rem; scrollbar-width: none; }
+    .recipe-feature__grid::-webkit-scrollbar { display: none; }
+    .recipe-feature__grid > * { min-width: 78vw; scroll-snap-align: start; }
+    .story-break__inner { grid-template-columns: 1fr; min-height: 37rem; align-content: center; }
+    .story-break__label { display: flex; justify-content: space-between; align-items: start; }
+    .story-break__mark { left: -.7rem; }
+    .journal__grid { grid-template-columns: 1fr; }
+    .journal-card--lead { display: block; grid-column: auto; }
+    .journal-card--lead .journal-card__image-wrap { aspect-ratio: 4 / 5; }
+    .department { grid-template-columns: 2rem 1fr auto; gap: .75rem; }
+    .department__titles { display: none; }
+  }
+</style>

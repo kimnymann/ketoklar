@@ -1,0 +1,48 @@
+---
+interface Props {
+  light?: boolean;
+}
+
+const { light = false } = Astro.props;
+---
+
+<span class:list={["brand-mark", { "brand-mark--light": light }]} aria-label="Ketoklar">
+  <span class="brand-mark__word">Keto<span>klar</span></span>
+  <svg class="brand-mark__spark" viewBox="0 0 28 28" aria-hidden="true">
+    <path d="M14 1.5 17.1 10.9 26.5 14l-9.4 3.1L14 26.5l-3.1-9.4L1.5 14l9.4-3.1L14 1.5Z" />
+  </svg>
+</span>
+
+<style>
+  .brand-mark {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: .25rem;
+    color: var(--ink);
+    line-height: .8;
+  }
+
+  .brand-mark__word {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -.075em;
+  }
+
+  .brand-mark__word span {
+    color: var(--tomato);
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  .brand-mark__spark {
+    width: .72rem;
+    color: var(--lime);
+    fill: currentColor;
+    transform: rotate(10deg);
+  }
+
+  .brand-mark--light {
+    color: var(--cream);
+  }
+</style>
