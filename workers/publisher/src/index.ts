@@ -6,7 +6,9 @@ export interface Env extends ImageEnv {
   PUBLISH_SECRET?: string;
 }
 
-const ARTICLES_PER_WEEK = 1;
+const ARTICLES_PER_MONDAY = 1;
+const ANECDOTES_PER_THURSDAY = 1;
+const LOW_ARTICLE_QUEUE_THRESHOLD = 2;
 const RECIPE_CATEGORY_ROTATION = ['morgen', 'frokost', 'aften', 'laekkerier'] as const;
 const DAILY_IMAGE_PREP_CRON = '0 5 * * *';
 
@@ -28,6 +30,8 @@ type ArticleQueueItem = {
   excerpt: string | null;
   body: string;
 };
+
+type ArticleTrack = 'article' | 'anecdote';
 
 async function categoryPriority(env: Env): Promise<RecipeQueueItem['category'][]> {
   const lastPublished = await env.DB
@@ -231,18 +235,50 @@ async function publishRecipes(env: Env) {
   return { published: [recipe.slug], category: recipe.category, warning: null, imageWarnings: [] as string[] };
 }
 
-async function publishArticles(env: Env, count: number) {
+function articleTrackDetails(track: ArticleTrack) {
+  return track === 'anecdote'
+    ? { where: `category = 'anekdote'`, label: 'Anekdote', queueLabel: 'Anekdotekøen' }
+    : { where: `category IN ('videnskab','livsstil')`, label: 'Artikel', queueLabel: 'Artikelkøen' };
+}
+
+async function articleQueueCount(env: Env, track: ArticleTrack): Promise<number> {
+  const { where } = articleTrackDetails(track);
+  const row = await env.DB
+    .prepare(`SELECT COUNT(*) AS count FROM articles WHERE status = 'godkendt' AND published_at IS NULL AND ${where}`)
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
+async function publishArticleTrack(env: Env, count: number, track: ArticleTrack) {
+  const { where, label, queueLabel } = articleTrackDetails(track);
+  const publishedToday = await env.DB
+    .prepare(`SELECT COUNT(*) AS count FROM articles WHERE published_at >= date('now') AND ${where}`)
+    .first<{ count: number }>();
+  if ((publishedToday?.count ?? 0) > 0) {
+    return {
+      published: [] as string[],
+      queueRemaining: await articleQueueCount(env, track),
+      warning: `Dagens ${label.toLocaleLowerCase('da-DK')} er allerede udgivet.`,
+      imageWarnings: [] as string[],
+    };
+  }
+
   const { results } = await env.DB
     .prepare(
       `SELECT id, slug, title, category, excerpt, body FROM articles
-       WHERE status = 'godkendt' AND published_at IS NULL
+       WHERE status = 'godkendt' AND published_at IS NULL AND ${where}
        ORDER BY created_at ASC, id ASC LIMIT ?`
     )
     .bind(count)
     .all<ArticleQueueItem>();
 
   if (results.length === 0) {
-    return { published: [] as string[], warning: 'Artikelkøen er tom, ingen ny artikel at udgive.', imageWarnings: [] as string[] };
+    return {
+      published: [] as string[],
+      queueRemaining: 0,
+      warning: `${queueLabel} er tom, ingen ny ${label.toLocaleLowerCase('da-DK')} at udgive.`,
+      imageWarnings: [] as string[],
+    };
   }
 
   const published: string[] = [];
@@ -267,20 +303,36 @@ async function publishArticles(env: Env, count: number) {
     published.push(article.slug);
   }
 
+  const queueRemaining = await articleQueueCount(env, track);
+  const publicationFailed = published.length === 0;
   return {
     published,
-    warning: published.length === 0 ? 'Ingen artikel blev udgivet, fordi billedkontrollen ikke var godkendt.' : null,
+    queueRemaining,
+    warning: publicationFailed
+      ? `Ingen ${label.toLocaleLowerCase('da-DK')} blev udgivet, fordi billedkontrollen ikke var godkendt.`
+      : queueRemaining <= LOW_ARTICLE_QUEUE_THRESHOLD
+        ? `${queueLabel} har kun ${queueRemaining} ${queueRemaining === 1 ? 'udgivelse' : 'udgivelser'} tilbage.`
+        : null,
     imageWarnings,
   };
 }
 
 async function runPublishing(env: Env) {
   const recipeResult = await publishRecipes(env);
-  const isMonday = new Date().getUTCDay() === 1;
-  const articleResult = isMonday
-    ? await publishArticles(env, ARTICLES_PER_WEEK)
-    : { published: [], warning: null, imageWarnings: [] as string[] };
-  const summary = { timestamp: new Date().toISOString(), recipes: recipeResult, articles: articleResult };
+  const weekday = new Date().getUTCDay();
+  const idleTrack = { published: [] as string[], queueRemaining: null, warning: null, imageWarnings: [] as string[] };
+  const articleResult = weekday === 1
+    ? await publishArticleTrack(env, ARTICLES_PER_MONDAY, 'article')
+    : idleTrack;
+  const anecdoteResult = weekday === 4
+    ? await publishArticleTrack(env, ANECDOTES_PER_THURSDAY, 'anekdote')
+    : idleTrack;
+  const summary = {
+    timestamp: new Date().toISOString(),
+    recipes: recipeResult,
+    articles: articleResult,
+    anecdotes: anecdoteResult,
+  };
   console.log(JSON.stringify(summary));
   return summary;
 }
