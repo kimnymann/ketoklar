@@ -4,6 +4,7 @@ import type { Article, Recipe } from '../../lib/db';
 import { CATEGORY_LABELS, formatPublishedDate } from '../../lib/db';
 import { parseArticleBody } from '../../lib/articleBody';
 import { KETO_FOOD_LIST } from '../../lib/ketoFoodList';
+import AnecdoteArticle from '../../components/AnecdoteArticle.astro';
 import { env } from "cloudflare:workers";
 
 const { slug } = Astro.params;
@@ -46,9 +47,30 @@ const heroColors: Record<Article['category'], string> = {
   livsstil: 'var(--rust)',
   anekdote: 'var(--ink)',
 };
+
+let nextAnecdote: Article | null = null;
+if (article.category === 'anekdote') {
+  const { results: anecdotes } = await db
+    .prepare(`SELECT * FROM articles WHERE category = 'anekdote' AND status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC, id DESC`)
+    .all<Article>();
+  if (anecdotes.length > 1) {
+    const currentIndex = anecdotes.findIndex((item) => item.id === article.id);
+    nextAnecdote = anecdotes[(currentIndex + 1) % anecdotes.length] ?? null;
+  }
+}
 ---
 
 <Layout title={article.title} description={article.excerpt ?? undefined}>
+  {article.category === 'anekdote' ? (
+    <AnecdoteArticle
+      article={article}
+      relatedRecipes={relatedRecipes}
+      bodyImages={bodyImages}
+      nextAnecdote={nextAnecdote}
+      isLocked={isLocked}
+    />
+  ) : (
+    <>
   {article.image_url ? (
     <img src={article.image_url} alt={article.title} class="w-full aspect-[21/9] object-cover rounded-sm mb-8" />
   ) : (
@@ -178,6 +200,8 @@ const heroColors: Record<Article['category'], string> = {
         ))}
       </div>
     </div>
+  )}
+    </>
   )}
 </Layout>
 

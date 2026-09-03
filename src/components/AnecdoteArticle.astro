@@ -1,0 +1,174 @@
+---
+import type { Article, Recipe } from '../lib/db';
+import { CATEGORY_LABELS, formatPublishedDate } from '../lib/db';
+import { parseArticleBody } from '../lib/articleBody';
+
+type BodyImage = { marker: string; image_url: string | null; image_status: string };
+
+const {
+  article,
+  relatedRecipes,
+  bodyImages,
+  nextAnecdote,
+  isLocked,
+} = Astro.props as {
+  article: Article;
+  relatedRecipes: Recipe[];
+  bodyImages: BodyImage[];
+  nextAnecdote: Article | null;
+  isLocked: boolean;
+};
+
+const blocks = isLocked ? [] : parseArticleBody(article.body);
+const recipesBySlug = new Map(relatedRecipes.map((recipe) => [recipe.slug, recipe]));
+const imagesByMarker = new Map(bodyImages.map((image) => [image.marker, image]));
+const minutes = Math.max(1, Math.ceil(article.body.trim().split(/\s+/).length / 180));
+---
+
+<article class="anecdote-story">
+  <a href="/artikler/anekdoter" class="anecdote-story__back">← Alle anekdoter</a>
+
+  <header class:list={["anecdote-story__hero", { "anecdote-story__hero--image": article.image_url }]} data-reveal>
+    {article.image_url && (
+      <div class="anecdote-story__image">
+        <img src={article.image_url} alt={article.title} />
+      </div>
+    )}
+    <div class="anecdote-story__heading">
+      <div class="anecdote-story__meta">
+        <span>Anekdote</span>
+        <span>{minutes} min. læsning</span>
+      </div>
+      <h1>{article.title}</h1>
+      {article.excerpt && <p>“{article.excerpt}”</p>}
+      <time datetime={article.published_at ?? undefined}>{formatPublishedDate(article.published_at)}</time>
+    </div>
+  </header>
+
+  {isLocked ? (
+    <div class="anecdote-story__locked">
+      <span aria-hidden="true">✦</span>
+      <h2>Denne historie er kun for abonnenter</h2>
+      <p>Bliv abonnent og få adgang til alle historier på Ketoklar.</p>
+      <a href="/abonnement">Se abonnement</a>
+    </div>
+  ) : (
+    <div class="anecdote-copy">
+      {blocks.map((block) => {
+        if (block.type === 'heading') {
+          return <h2>{block.text}</h2>;
+        }
+        if (block.type === 'quote') {
+          return <blockquote><span aria-hidden="true">“</span><p>{block.text}</p></blockquote>;
+        }
+        if (block.type === 'recipe') {
+          const recipe = recipesBySlug.get(block.slug);
+          if (!recipe) return null;
+          return (
+            <a href={`/opskrifter/${recipe.slug}`} class="inline-recipe">
+              {recipe.image_url ? <img src={recipe.image_url} alt={recipe.title} loading="lazy" /> : <div class="inline-recipe__empty"></div>}
+              <div>
+                <span>Fra historien · {CATEGORY_LABELS[recipe.category]}</span>
+                <h3>{recipe.title}</h3>
+                <p>{recipe.kcal} kcal · {recipe.carbs_g} g kulhydrat</p>
+              </div>
+              <i aria-hidden="true">↗</i>
+            </a>
+          );
+        }
+        if (block.type === 'articleImage') {
+          const image = imagesByMarker.get(block.marker);
+          if (!image?.image_url) return null;
+          return <img src={image.image_url} alt="" class="anecdote-copy__image" loading="lazy" />;
+        }
+        if (block.type === 'foodlist') return null;
+        return <p set:html={block.html} />;
+      })}
+    </div>
+  )}
+
+  {!isLocked && relatedRecipes.length > 0 && (
+    <section class="story-recipes" aria-labelledby="story-recipes-title">
+      <div>
+        <span>Fra fortællingen</span>
+        <h2 id="story-recipes-title">Spis historien</h2>
+      </div>
+      <div class="story-recipes__grid">
+        {relatedRecipes.map((recipe) => (
+          <a href={`/opskrifter/${recipe.slug}`}>
+            {recipe.image_url ? <img src={recipe.image_url} alt="" loading="lazy" /> : <div class="story-recipes__empty"></div>}
+            <div>
+              <span>{CATEGORY_LABELS[recipe.category]}</span>
+              <h3>{recipe.title}</h3>
+            </div>
+            <i aria-hidden="true">↗</i>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {nextAnecdote && (
+    <a href={`/artikler/${nextAnecdote.slug}`} class="next-anecdote" data-reveal>
+      <span>Næste anekdote</span>
+      <h2>{nextAnecdote.title}</h2>
+      <i aria-hidden="true">→</i>
+    </a>
+  )}
+</article>
+
+<style>
+  .anecdote-story__back { display: inline-block; margin-bottom: 2rem; color: var(--tomato-dark); font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .anecdote-story__hero { position: relative; display: grid; min-height: 38rem; overflow: hidden; border-radius: var(--radius-lg); color: var(--cream); background: var(--forest); }
+  .anecdote-story__hero--image { grid-template-columns: 1.05fr .95fr; }
+  .anecdote-story__image { min-height: 32rem; overflow: hidden; }
+  .anecdote-story__image img { width: 100%; height: 100%; object-fit: cover; }
+  .anecdote-story__heading { display: flex; flex-direction: column; justify-content: center; padding: clamp(2rem, 6vw, 5rem); }
+  .anecdote-story__meta { display: flex; justify-content: space-between; margin-bottom: 1.5rem; color: var(--lime); font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .anecdote-story h1 { max-width: 12ch; font-family: var(--font-display); font-size: clamp(3.2rem, 6.7vw, 6.2rem); font-weight: 500; letter-spacing: -.07em; line-height: .83; }
+  .anecdote-story__heading > p { max-width: 31rem; margin-top: 2rem; color: rgba(255,250,240,.8); font-family: var(--font-display); font-size: 1.15rem; font-style: italic; line-height: 1.45; }
+  .anecdote-story__heading time { margin-top: 2rem; font-size: .64rem; letter-spacing: .1em; text-transform: uppercase; opacity: .62; }
+  .anecdote-copy { max-width: 43rem; margin: clamp(4rem, 9vw, 7rem) auto 0; color: var(--ink); font-family: var(--font-display); font-size: clamp(1.18rem, 2.25vw, 1.45rem); line-height: 1.7; }
+  .anecdote-copy > p { margin-top: 1.55rem; }
+  .anecdote-copy > p:first-child { margin-top: 0; }
+  .anecdote-copy > p:first-child::first-letter { float: left; margin: .12em .12em 0 0; color: var(--tomato); font-size: 5.2em; font-weight: 600; line-height: .7; }
+  .anecdote-copy h2 { margin: 3.5rem 0 1rem; font-family: var(--font-body); font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .anecdote-copy blockquote { position: relative; width: min(55rem, calc(100vw - 2rem)); margin: 4rem 50%; padding: clamp(2.5rem, 6vw, 4.5rem); border-radius: var(--radius-md); color: var(--ink); background: var(--sky); transform: translateX(-50%); }
+  .anecdote-copy blockquote span { position: absolute; top: -1.8rem; left: 1.5rem; color: var(--tomato); font-size: 9rem; line-height: 1; }
+  .anecdote-copy blockquote p { position: relative; font-size: clamp(1.8rem, 4vw, 3.2rem); font-style: italic; font-weight: 550; letter-spacing: -.04em; line-height: 1.05; }
+  .anecdote-copy__image { width: min(53rem, calc(100vw - 2rem)); max-height: 38rem; margin: 3.5rem 50%; border-radius: var(--radius-md); object-fit: cover; transform: translateX(-50%); }
+  .inline-recipe { display: grid; grid-template-columns: 5.5rem 1fr auto; align-items: center; gap: 1rem; margin: 2.5rem 0; overflow: hidden; border: 1px solid rgba(16,35,26,.18); border-radius: var(--radius-md); background: var(--card); font-family: var(--font-body); }
+  .inline-recipe img, .inline-recipe__empty { width: 5.5rem; height: 6.8rem; object-fit: cover; background: var(--sky); }
+  .inline-recipe span, .story-recipes span { color: var(--tomato-dark); font-size: .6rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .inline-recipe h3 { margin-top: .25rem; font-family: var(--font-display); font-size: 1.15rem; line-height: 1.05; }
+  .inline-recipe p { margin-top: .35rem; color: var(--muted); font-size: .68rem; }
+  .inline-recipe i { padding-right: 1.25rem; font-family: var(--font-body); font-size: 1.2rem; font-style: normal; }
+  .anecdote-story__locked { margin: 4rem auto 0; padding: 4rem 2rem; border-radius: var(--radius-md); text-align: center; background: var(--card); }
+  .anecdote-story__locked > span { color: var(--tomato); font-size: 2rem; }
+  .anecdote-story__locked h2 { margin-top: 1rem; font-family: var(--font-display); font-size: 2rem; }
+  .anecdote-story__locked p { margin: .7rem 0 1.5rem; color: var(--muted); }
+  .anecdote-story__locked a { display: inline-block; padding: .8rem 1.1rem; border-radius: 999px; color: var(--cream); background: var(--ink); font-size: .7rem; font-weight: 700; text-transform: uppercase; }
+  .story-recipes { display: grid; grid-template-columns: 14rem 1fr; gap: 3rem; max-width: 53rem; margin: clamp(5rem, 10vw, 8rem) auto 0; padding-top: 2rem; border-top: 1px solid rgba(16,35,26,.25); }
+  .story-recipes > div:first-child > span { display: block; margin-bottom: .5rem; }
+  .story-recipes h2 { font-family: var(--font-display); font-size: 2.2rem; font-weight: 550; letter-spacing: -.04em; line-height: .95; }
+  .story-recipes__grid { display: grid; gap: .75rem; }
+  .story-recipes__grid > a { display: grid; grid-template-columns: 4.5rem 1fr auto; align-items: center; gap: 1rem; overflow: hidden; border-radius: 1rem; background: var(--card); }
+  .story-recipes__grid img, .story-recipes__empty { width: 4.5rem; height: 5.2rem; object-fit: cover; background: var(--sky); }
+  .story-recipes__grid h3 { margin-top: .2rem; font-family: var(--font-display); font-size: 1.05rem; }
+  .story-recipes__grid i { padding-right: 1rem; font-style: normal; }
+  .next-anecdote { position: relative; display: block; margin-top: clamp(5rem, 10vw, 8rem); padding: clamp(2.5rem, 7vw, 5.5rem); overflow: hidden; border-radius: var(--radius-lg); color: var(--ink); background: var(--lime); }
+  .next-anecdote > span { font-size: .67rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .next-anecdote h2 { max-width: 13ch; margin-top: 2rem; font-family: var(--font-display); font-size: clamp(2.8rem, 7vw, 6rem); font-weight: 550; letter-spacing: -.065em; line-height: .86; }
+  .next-anecdote i { position: absolute; right: 4rem; bottom: 3rem; font-size: clamp(3rem, 7vw, 6rem); font-style: normal; transition: transform .25s ease; }
+  .next-anecdote:hover i { transform: translateX(.5rem); }
+  @media (max-width: 720px) {
+    .anecdote-story__hero--image { grid-template-columns: 1fr; }
+    .anecdote-story__image { min-height: 74vw; }
+    .anecdote-story__heading { min-height: 29rem; }
+    .anecdote-story h1 { font-size: clamp(3.3rem, 15vw, 5.2rem); }
+    .anecdote-copy { font-size: 1.16rem; line-height: 1.65; }
+    .anecdote-copy blockquote { padding: 3.2rem 1.4rem 2.2rem; }
+    .story-recipes { grid-template-columns: 1fr; gap: 1.5rem; }
+    .next-anecdote i { right: 1.5rem; bottom: 1.2rem; opacity: .35; }
+  }
+</style>

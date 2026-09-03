@@ -13,11 +13,11 @@ const lead = await db
   .first<Article>();
 
 const anecdote = await db
-  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND category = 'anekdote' AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC LIMIT 1`)
+  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND category = 'anekdote' AND published_at IS NOT NULL AND published_at <= datetime('now') ORDER BY published_at DESC, id DESC LIMIT 1`)
   .first<Article>();
 
 const { results: recentArticles } = await db
-  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') AND id != ? ORDER BY published_at DESC LIMIT 5`)
+  .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND category IN ('videnskab','livsstil') AND published_at IS NOT NULL AND published_at <= datetime('now') AND id != ? ORDER BY published_at DESC LIMIT 5`)
   .bind(lead?.id ?? -1)
   .all<Article>();
 
