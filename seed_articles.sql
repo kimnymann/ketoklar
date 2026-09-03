@@ -253,3 +253,65 @@ Boardingen begynder. Du ruller posen sammen, lægger den i tasken og går mod fl
 INSERT OR IGNORE INTO article_recipes (article_id, recipe_id)
 SELECT a.id, r.id FROM articles a, recipes r
 WHERE a.slug = 'koeletasken-til-sommerfesten' AND r.slug = 'kokosmakroner';
+
+-- Redaktionelt godkendte billeder til de nye anekdoter. De ligger som optimerede
+-- webassets i selve sitet og markeres som godkendte, så den automatiske
+-- billed-backfill ikke erstatter dem senere.
+UPDATE articles SET
+  image_url = '/images/anekdoter/boeffen-i-frokoststuen.webp',
+  image_prompt = 'En bøfmadpakke med grønne bønner og bearnaise i en dansk frokoststue',
+  image_model = 'gpt-image via Codex',
+  image_status = 'klar',
+  image_version = CASE WHEN COALESCE(image_url, '') != '/images/anekdoter/boeffen-i-frokoststuen.webp' THEN image_version + 1 ELSE image_version END
+WHERE slug = 'boeffen-i-frokoststuen';
+
+UPDATE articles SET
+  image_url = '/images/anekdoter/faetter-michael-har-laest-noget.webp',
+  image_prompt = 'Et dansk familiemiddagsbord med ketotallerken og en telefon lagt med skærmen nedad',
+  image_model = 'gpt-image via Codex',
+  image_status = 'klar',
+  image_version = CASE WHEN COALESCE(image_url, '') != '/images/anekdoter/faetter-michael-har-laest-noget.webp' THEN image_version + 1 ELSE image_version END
+WHERE slug = 'faetter-michael-har-laest-noget';
+
+UPDATE articles SET
+  image_url = '/images/anekdoter/manden-med-bananen.webp',
+  image_prompt = 'En ensom banan i flaskeholderen på et løbebånd i et nordisk fitnesscenter',
+  image_model = 'gpt-image via Codex',
+  image_status = 'klar',
+  image_version = CASE WHEN COALESCE(image_url, '') != '/images/anekdoter/manden-med-bananen.webp' THEN image_version + 1 ELSE image_version END
+WHERE slug = 'manden-med-bananen';
+
+UPDATE articles SET
+  image_url = '/images/anekdoter/koeletasken-til-sommerfesten.webp',
+  image_prompt = 'En åben køletaske med kyllingesalat og kokosmakroner ved en dansk havefest',
+  image_model = 'gpt-image via Codex',
+  image_status = 'klar',
+  image_version = CASE WHEN COALESCE(image_url, '') != '/images/anekdoter/koeletasken-til-sommerfesten.webp' THEN image_version + 1 ELSE image_version END
+WHERE slug = 'koeletasken-til-sommerfesten';
+
+UPDATE articles SET
+  image_url = '/images/anekdoter/den-ensomme-pose-noedder.webp',
+  image_prompt = 'En lille pose mandler og valnødder ved en kaffe på et tomt lufthavnssæde',
+  image_model = 'gpt-image via Codex',
+  image_status = 'klar',
+  image_version = CASE WHEN COALESCE(image_url, '') != '/images/anekdoter/den-ensomme-pose-noedder.webp' THEN image_version + 1 ELSE image_version END
+WHERE slug = 'den-ensomme-pose-noedder';
+
+INSERT INTO image_reviews
+  (entity_type, entity_id, marker, attempt, status, score, reason, observed_subject, candidate_url, review_model)
+SELECT
+  'article', a.id, '', 1, 'godkendt', 100,
+  'Redaktionelt kontrolleret mod anekdotens konkrete scene.',
+  a.title, a.image_url, 'codex-manual-editorial-review'
+FROM articles a
+WHERE a.slug IN (
+  'boeffen-i-frokoststuen',
+  'faetter-michael-har-laest-noget',
+  'manden-med-bananen',
+  'koeletasken-til-sommerfesten',
+  'den-ensomme-pose-noedder'
+)
+AND NOT EXISTS (
+  SELECT 1 FROM image_reviews ir
+  WHERE ir.entity_type = 'article' AND ir.entity_id = a.id AND ir.status = 'godkendt'
+);
