@@ -48,7 +48,6 @@ img { display: block; }
 .edition-bar { color: var(--cream); background: var(--forest); }
 .edition-bar__inner { display: flex; align-items: center; justify-content: center; gap: .65rem; min-height: 2rem; font-size: .62rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .edition-bar__dot { width: .35rem; height: .35rem; border-radius: 50%; background: var(--lime); }
-.edition-bar__date { text-transform: none; }
 
 .site-header { position: relative; z-index: 20; border-bottom: 1px solid rgba(16, 35, 26, .2); background: color-mix(in srgb, var(--paper) 92%, transparent); backdrop-filter: blur(14px); }
 .site-header__inner { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 6.4rem; }
