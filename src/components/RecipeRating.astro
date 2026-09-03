@@ -45,6 +45,7 @@ const summary = count === 0 ? 'Ingen vurderinger endnu' : `${average.toFixed(1).
     let widgetId = null;
     let pendingRating = null;
     let submitting = false;
+    let savedRating = null;
 
     const setSelection = (rating) => {
       buttons.forEach((button) => {
@@ -59,7 +60,8 @@ const summary = count === 0 ? 'Ingen vurderinger endnu' : `${average.toFixed(1).
       summary.textContent = data.count === 0
         ? 'Ingen vurderinger endnu'
         : `${Number(data.average).toFixed(1).replace('.', ',')} · ${data.count} ${data.count === 1 ? 'vurdering' : 'vurderinger'}`;
-      setSelection(data.userRating);
+      savedRating = data.userRating;
+      setSelection(savedRating);
     };
 
     const setBusy = (busy) => {
@@ -130,6 +132,19 @@ const summary = count === 0 ? 'Ingen vurderinger endnu' : `${average.toFixed(1).
 
     buttons.forEach((button) => {
       button.addEventListener('click', () => beginRating(Number(button.dataset.rating)));
+      button.addEventListener('pointerenter', () => {
+        if (!submitting) setSelection(Number(button.dataset.rating));
+      });
+      button.addEventListener('focus', () => {
+        if (!submitting) setSelection(Number(button.dataset.rating));
+      });
+      button.addEventListener('blur', () => {
+        if (!submitting) setSelection(savedRating);
+      });
+    });
+
+    root.querySelector('[data-rating]')?.parentElement?.addEventListener('pointerleave', () => {
+      if (!submitting) setSelection(savedRating);
     });
 
     fetch(`/api/ratings/${encodeURIComponent(slug)}`)
