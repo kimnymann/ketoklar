@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import RecipeRating from '../../components/RecipeRating.astro';
 import type { Recipe, Article } from '../../lib/db';
 import { CATEGORY_LABELS, formatPublishedDate } from '../../lib/db';
 import { groupIngredientsByCategory, splitInstructionsIntoSteps } from '../../lib/ingredientCategory';
@@ -33,6 +34,23 @@ const { results: relatedArticles } = await db
 // TODO fase 2: erstat med rigtigt abonnements-tjek (session/cookie)
 const isSubscriber = false;
 const isLocked = recipe.locked === 1 && !isSubscriber;
+
+let ratingSummary = { average: 0, count: 0 };
+try {
+  const summary = await db.prepare(`
+    SELECT COALESCE(ROUND(AVG(rating), 1), 0) AS average, COUNT(*) AS count
+    FROM recipe_ratings WHERE recipe_id = ?
+  `).bind(recipe.id).first<{ average: number; count: number }>();
+  ratingSummary = {
+    average: Number(summary?.average ?? 0),
+    count: Number(summary?.count ?? 0),
+  };
+} catch {
+  // Siden kan stadig vises, mens en ny databasemigration rulles ud.
+}
+
+const isLocal = Astro.url.hostname === 'localhost' || Astro.url.hostname === '127.0.0.1';
+const turnstileSiteKey = isLocal ? '1x00000000000000000000AA' : (env.TURNSTILE_SITE_KEY ?? '');
 ---
 
 <Layout title={recipe.title}>
@@ -106,6 +124,15 @@ const isLocked = recipe.locked === 1 && !isSubscriber;
         )}
       </div>
     </div>
+  )}
+
+  {!isLocked && (
+    <RecipeRating
+      slug={recipe.slug}
+      average={ratingSummary.average}
+      count={ratingSummary.count}
+      siteKey={turnstileSiteKey}
+    />
   )}
 
   {relatedArticles.length > 0 && (

@@ -1,0 +1,162 @@
+---
+interface Props {
+  slug: string;
+  average: number;
+  count: number;
+  siteKey: string;
+}
+
+const { slug, average, count, siteKey } = Astro.props;
+const summary = count === 0 ? 'Ingen vurderinger endnu' : `${average.toFixed(1).replace('.', ',')} · ${count} ${count === 1 ? 'vurdering' : 'vurderinger'}`;
+---
+
+<section class="recipe-rating" data-rating-widget={slug} data-site-key={siteKey} aria-labelledby={`rating-title-${slug}`}>
+  <div class="recipe-rating__copy">
+    <span class="recipe-rating__eyebrow">Smagte den godt?</span>
+    <h2 id={`rating-title-${slug}`}>Bedøm opskriften</h2>
+    <p>Din vurdering hjælper andre med at finde de bedste retter.</p>
+  </div>
+
+  <div class="recipe-rating__interaction">
+    <div class="recipe-rating__stars" role="group" aria-label="Vælg antal stjerner">
+      {[1, 2, 3, 4, 5].map((value) => (
+        <button type="button" data-rating={value} aria-label={`${value} ${value === 1 ? 'stjerne' : 'stjerner'}`} aria-pressed="false">★</button>
+      ))}
+    </div>
+    <div class="recipe-rating__summary" data-rating-summary>{summary}</div>
+    <div class="recipe-rating__turnstile" data-rating-turnstile></div>
+    <p class="recipe-rating__status" data-rating-status aria-live="polite"></p>
+    <p class="recipe-rating__privacy">Ketoklar gemmer ikke din IP-adresse sammen med vurderingen.</p>
+  </div>
+</section>
+
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script is:inline>
+  (() => {
+    const root = document.currentScript.previousElementSibling.previousElementSibling;
+    if (!(root instanceof HTMLElement)) return;
+
+    const slug = root.dataset.ratingWidget;
+    const siteKey = root.dataset.siteKey;
+    const buttons = [...root.querySelectorAll('[data-rating]')];
+    const summary = root.querySelector('[data-rating-summary]');
+    const status = root.querySelector('[data-rating-status]');
+    const turnstileHost = root.querySelector('[data-rating-turnstile]');
+    let widgetId = null;
+    let pendingRating = null;
+    let submitting = false;
+
+    const setSelection = (rating) => {
+      buttons.forEach((button) => {
+        const selected = Number(button.dataset.rating) <= Number(rating || 0);
+        button.classList.toggle('is-selected', selected);
+        button.setAttribute('aria-pressed', button.dataset.rating === String(rating));
+      });
+    };
+
+    const updateSummary = (data) => {
+      if (!summary) return;
+      summary.textContent = data.count === 0
+        ? 'Ingen vurderinger endnu'
+        : `${Number(data.average).toFixed(1).replace('.', ',')} · ${data.count} ${data.count === 1 ? 'vurdering' : 'vurderinger'}`;
+      setSelection(data.userRating);
+    };
+
+    const setBusy = (busy) => {
+      submitting = busy;
+      buttons.forEach((button) => { button.disabled = busy; });
+    };
+
+    const submitRating = async (token) => {
+      if (!pendingRating) return;
+      if (status) status.textContent = 'Gemmer din vurdering…';
+
+      try {
+        const response = await fetch(`/api/ratings/${encodeURIComponent(slug)}`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ rating: pendingRating, turnstileToken: token }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Vurderingen kunne ikke gemmes.');
+        updateSummary(data);
+        if (status) status.textContent = 'Tak — din vurdering er gemt.';
+      } catch (error) {
+        if (status) status.textContent = error instanceof Error ? error.message : 'Vurderingen kunne ikke gemmes.';
+      } finally {
+        setBusy(false);
+        if (widgetId !== null && window.turnstile) window.turnstile.reset(widgetId);
+      }
+    };
+
+    const waitForTurnstile = async () => {
+      for (let attempt = 0; attempt < 50; attempt += 1) {
+        if (window.turnstile) return window.turnstile;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      return null;
+    };
+
+    const beginRating = async (rating) => {
+      if (submitting) return;
+      pendingRating = rating;
+      setBusy(true);
+      setSelection(rating);
+      if (status) status.textContent = 'Kontrollerer…';
+
+      const turnstile = await waitForTurnstile();
+      if (!turnstile || !siteKey || !turnstileHost) {
+        if (status) status.textContent = 'Bedømmelser er midlertidigt utilgængelige.';
+        setBusy(false);
+        return;
+      }
+
+      if (widgetId === null) {
+        widgetId = turnstile.render(turnstileHost, {
+          sitekey: siteKey,
+          action: 'recipe-rating',
+          execution: 'execute',
+          appearance: 'interaction-only',
+          callback: submitRating,
+          'error-callback': () => {
+            if (status) status.textContent = 'Sikkerhedstjekket fejlede. Prøv igen.';
+            setBusy(false);
+          },
+        });
+      }
+
+      turnstile.execute(widgetId);
+    };
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => beginRating(Number(button.dataset.rating)));
+    });
+
+    fetch(`/api/ratings/${encodeURIComponent(slug)}`)
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => { if (data) updateSummary(data); })
+      .catch(() => {});
+  })();
+</script>
+
+<style>
+  .recipe-rating { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2rem; margin-top: 4.5rem; padding: clamp(1.5rem, 4vw, 2.5rem); border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 1.5rem; background: var(--paper-light); }
+  .recipe-rating__eyebrow { color: var(--rust); font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .recipe-rating h2 { margin-top: .25rem; font-family: var(--font-display); font-size: clamp(1.65rem, 3vw, 2.25rem); line-height: 1; }
+  .recipe-rating__copy p { max-width: 31rem; margin-top: .65rem; color: var(--sage); }
+  .recipe-rating__interaction { min-width: 15rem; text-align: center; }
+  .recipe-rating__stars { display: flex; justify-content: center; gap: .16rem; }
+  .recipe-rating__stars button { padding: .15rem; color: color-mix(in srgb, var(--sage) 35%, transparent); background: transparent; border: 0; font-size: clamp(1.85rem, 4vw, 2.5rem); line-height: 1; cursor: pointer; transition: color .16s ease, transform .16s ease; }
+  .recipe-rating__stars button:hover, .recipe-rating__stars button:focus-visible, .recipe-rating__stars button.is-selected { color: var(--tomato); transform: translateY(-2px); }
+  .recipe-rating__stars button:disabled { cursor: wait; opacity: .7; }
+  .recipe-rating__summary { margin-top: .55rem; color: var(--ink); font-size: .75rem; font-weight: 700; letter-spacing: .04em; }
+  .recipe-rating__turnstile { display: flex; justify-content: center; min-height: 1px; margin-top: .5rem; }
+  .recipe-rating__status { min-height: 1.25rem; margin-top: .35rem; color: var(--sage); font-size: .72rem; }
+  .recipe-rating__privacy { max-width: 19rem; margin: .25rem auto 0; color: color-mix(in srgb, var(--sage) 78%, transparent); font-size: .62rem; line-height: 1.35; }
+
+  @media (max-width: 700px) {
+    .recipe-rating { grid-template-columns: 1fr; gap: 1.5rem; text-align: center; }
+    .recipe-rating__copy p { margin-inline: auto; }
+    .recipe-rating__interaction { min-width: 0; }
+  }
+</style>

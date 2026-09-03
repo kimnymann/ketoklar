@@ -91,8 +91,21 @@ CREATE TABLE IF NOT EXISTS image_reviews (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Anonyme brugervurderinger. voter_hash kommer fra en tilfældig HttpOnly-cookie;
+-- IP-adresser gemmes ikke. En browser kan kun have én aktiv vurdering pr. opskrift.
+CREATE TABLE IF NOT EXISTS recipe_ratings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  voter_hash TEXT NOT NULL,
+  rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (recipe_id, voter_hash)
+);
+
 CREATE INDEX IF NOT EXISTS idx_recipes_category ON recipes(category);
 CREATE INDEX IF NOT EXISTS idx_recipes_status ON recipes(status);
 CREATE INDEX IF NOT EXISTS idx_articles_category ON articles(category);
 CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status);
 CREATE INDEX IF NOT EXISTS idx_image_reviews_entity ON image_reviews(entity_type, entity_id, marker, id DESC);
+CREATE INDEX IF NOT EXISTS idx_recipe_ratings_recipe ON recipe_ratings(recipe_id);
