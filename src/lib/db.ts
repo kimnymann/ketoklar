@@ -37,3 +37,13 @@ export const CATEGORY_LABELS: Record<Recipe['category'], string> = {
   aften: 'Aften',
   laekkerier: 'Lækkerier',
 };
+
+// D1 gemmer datoer som "YYYY-MM-DD HH:MM:SS" (UTC, uden T/Z), Safari kan ikke parse det
+// direkte, så vi omformer til ISO-format, før det gives til Date.
+export function formatPublishedDate(publishedAt: string | null): string {
+  if (!publishedAt) return '';
+  const iso = publishedAt.includes('T') ? publishedAt : publishedAt.replace(' ', 'T') + 'Z';
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('da-DK', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+}

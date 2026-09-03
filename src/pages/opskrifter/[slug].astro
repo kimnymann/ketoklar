@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import type { Recipe, Article } from '../../lib/db';
-import { CATEGORY_LABELS } from '../../lib/db';
+import { CATEGORY_LABELS, formatPublishedDate } from '../../lib/db';
 import { groupIngredientsByCategory, splitInstructionsIntoSteps } from '../../lib/ingredientCategory';
 
 const { slug } = Astro.params;
@@ -42,7 +42,10 @@ const isLocked = recipe.locked === 1 && !isSubscriber;
     <div class="w-full aspect-[21/9] rounded-sm mb-6" style="background-color: var(--sage);"></div>
   )}
 
-  <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[recipe.category]}</span>
+  <div class="flex items-baseline justify-between">
+    <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[recipe.category]}</span>
+    <span class="text-xs text-[var(--sage)]">{formatPublishedDate(recipe.published_at)}</span>
+  </div>
   <h1 class="text-3xl font-display font-600 mt-1 mb-4">{recipe.title}</h1>
   <p class="text-sm text-[var(--sage)] mb-8">
     {recipe.servings} portioner · {recipe.prep_minutes} min · {recipe.kcal} kcal pr. portion · {recipe.carbs_g} g kulhydrat · {recipe.fat_g} g fedt · {recipe.protein_g} g protein

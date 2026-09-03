@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import type { Article, Recipe } from '../../lib/db';
-import { CATEGORY_LABELS } from '../../lib/db';
+import { CATEGORY_LABELS, formatPublishedDate } from '../../lib/db';
 import { parseArticleBody } from '../../lib/articleBody';
 import { KETO_FOOD_LIST } from '../../lib/ketoFoodList';
 import { env } from "cloudflare:workers";
@@ -54,14 +54,20 @@ const heroColors: Record<Article['category'], string> = {
   ) : (
     <div class="aspect-[21/9] mb-8 flex items-end p-8 rounded-sm" style={`background-color: ${heroColors[article.category]};`}>
       <div>
-        <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--paper-light);">{article.category}</span>
+        <div class="flex items-baseline gap-3">
+          <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--paper-light);">{article.category}</span>
+          <span class="text-xs" style="color: var(--paper);">{formatPublishedDate(article.published_at)}</span>
+        </div>
         <h1 class="font-display text-3xl md:text-4xl font-700 mt-1" style="color: var(--paper-light);">{article.title}</h1>
       </div>
     </div>
   )}
   {article.image_url && (
     <div class="mb-8">
-      <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--rust);">{article.category}</span>
+      <div class="flex items-baseline justify-between">
+        <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--rust);">{article.category}</span>
+        <span class="text-xs" style="color: var(--sage);">{formatPublishedDate(article.published_at)}</span>
+      </div>
       <h1 class="font-display text-3xl md:text-4xl font-700 mt-1" style="color: var(--ink);">{article.title}</h1>
     </div>
   )}
