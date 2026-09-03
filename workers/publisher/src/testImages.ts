@@ -37,9 +37,9 @@ export async function handleTestImages(request: Request, env: ImageEnv): Promise
 
   for (const slug of slugs) {
     const recipe = await env.DB
-      .prepare(`SELECT title, category, ingredients_json FROM recipes WHERE slug = ?`)
+      .prepare(`SELECT title, category, ingredients_json, instructions FROM recipes WHERE slug = ?`)
       .bind(slug)
-      .first<{ title: string; category: 'morgen' | 'frokost' | 'aften' | 'laekkerier'; ingredients_json: string }>();
+      .first<{ title: string; category: 'morgen' | 'frokost' | 'aften' | 'laekkerier'; ingredients_json: string; instructions: string }>();
 
     if (!recipe) {
       results.push({ slug, model: '-', key: '-', url: null, error: 'Opskrift ikke fundet' });

@@ -72,7 +72,27 @@ CREATE TABLE IF NOT EXISTS article_images (
   UNIQUE (article_id, marker)
 );
 
+-- Hvert AI-genereret billede vurderes af en separat visionmodel, før det må
+-- publiceres. Afviste kandidater gemmes, så årsagen kan undersøges uden at
+-- overskrive et eventuelt eksisterende livebillede.
+CREATE TABLE IF NOT EXISTS image_reviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  entity_type TEXT NOT NULL CHECK (entity_type IN ('recipe','article','article_body')),
+  entity_id INTEGER NOT NULL,
+  marker TEXT NOT NULL DEFAULT '',
+  attempt INTEGER NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('godkendt','afvist')),
+  score INTEGER NOT NULL,
+  reason TEXT,
+  observed_subject TEXT,
+  retry_instruction TEXT,
+  candidate_url TEXT,
+  review_model TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_recipes_category ON recipes(category);
 CREATE INDEX IF NOT EXISTS idx_recipes_status ON recipes(status);
 CREATE INDEX IF NOT EXISTS idx_articles_category ON articles(category);
 CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status);
+CREATE INDEX IF NOT EXISTS idx_image_reviews_entity ON image_reviews(entity_type, entity_id, marker, id DESC);

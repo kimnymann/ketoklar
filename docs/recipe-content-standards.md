@@ -43,5 +43,17 @@ frem for et mærkenavn).
 
 ## Billeder
 
-Håndteres allerede automatisk af publisher-workeren, ingen manuel handling
-nødvendig, se `workers/publisher/src/generateImage.ts` og `imagePrompt.ts`.
+Håndteres automatisk af publisher-workeren, se
+`workers/publisher/src/generateImage.ts`, `imagePrompt.ts` og `imageReview.ts`.
+
+- Billedprompten bygges af titel, hele ingredienslisten og fremgangsmåden.
+- Køens billeder klargøres dagligt kl. 05:00 UTC, før udgivelsen kl. 06:00 UTC.
+- En separat visionmodel kontrollerer rettens type, hovedingredienser og eventuelle
+  opdigtede madvarer. Der kræves mindst 75/100.
+- Et afvist billede genereres automatisk én gang mere med kontrollens rettelse.
+- Hvis begge forsøg afvises, sættes billedet til `fejlet`, og opskriften udgives
+  ikke automatisk. Kandidater og begrundelser gemmes til kontrol.
+- Efter en ny batch kan den beskyttede `POST /prepare-images` kaldes for at
+  klargøre billederne med det samme; ellers samler den daglige kørsel dem op.
+- Den beskyttede `POST /regenerate-images` kan bruges til målrettet at erstatte
+  billeder for op til fem angivne opskriftsslugs.

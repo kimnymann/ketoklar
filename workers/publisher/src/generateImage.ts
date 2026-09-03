@@ -1,128 +1,297 @@
 import { buildRecipePrompt, buildFullPrompt, buildArticlePrompt, type RecipeForPrompt, type ArticleForPrompt } from './imagePrompt';
+import { IMAGE_REVIEW_MODEL, reviewGeneratedImage, type ImageReview, type ReviewTarget } from './imageReview';
 import type { ImageEnv } from './testImages';
 
-// Valgt efter kvalitetstest af tre kandidater, se samtalen med Kim 1. september 2026.
 export const PRODUCTION_IMAGE_MODEL = '@cf/leonardo/lucid-origin';
+const MAX_GENERATION_ATTEMPTS = 2;
 
 type RecipeRow = RecipeForPrompt & { id: number; slug: string };
 type ArticleRow = ArticleForPrompt & { id: number; slug: string };
+type EntityType = 'recipe' | 'article' | 'article_body';
 
-// Matcher [[image:kort-id|prompt tekst]] linjer i en artikels brødtekst.
+export type ImageOutcome = {
+  ok: boolean;
+  error?: string;
+  url?: string | null;
+  review?: ImageReview;
+  reused?: boolean;
+};
+
 const BODY_IMAGE_MARKER = /\[\[image:([a-z0-9-]+)\|([^\]]+)\]\]/g;
 
-async function runImageGeneration(env: ImageEnv, prompt: string, key: string): Promise<{ ok: true; url: string | null } | { ok: false; error: string }> {
+function publicUrl(env: ImageEnv, key: string): string | null {
+  return env.IMAGES_PUBLIC_BASE_URL ? `${env.IMAGES_PUBLIC_BASE_URL}/${key}` : null;
+}
+
+async function runImageGeneration(env: ImageEnv, prompt: string, seed: string): Promise<{ ok: true; bytes: ArrayBuffer } | { ok: false; error: string }> {
   try {
+    let seedNumber = 0;
+    for (let i = 0; i < seed.length; i++) seedNumber = (seedNumber * 31 + seed.charCodeAt(i)) >>> 0;
+
     const output = (await env.AI.run(PRODUCTION_IMAGE_MODEL as keyof AiModels, {
       prompt,
       width: 1024,
       height: 768,
-    } as never)) as unknown as ReadableStream | { image: string };
+      guidance: 5,
+      num_steps: 30,
+      seed: Math.max(1, seedNumber),
+    } as never)) as unknown as ReadableStream | { image?: string };
 
-    let bytes: ArrayBuffer;
     if (output instanceof ReadableStream) {
-      bytes = await new Response(output).arrayBuffer();
-    } else {
-      const binary = atob(output.image);
-      const arr = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
-      bytes = arr.buffer;
+      return { ok: true, bytes: await new Response(output).arrayBuffer() };
     }
+    if (!output.image) return { ok: false, error: 'Billedmodellen returnerede ingen billeddata.' };
 
-    await env.IMAGES.put(key, bytes, { httpMetadata: { contentType: 'image/png' } });
-    const url = env.IMAGES_PUBLIC_BASE_URL ? `${env.IMAGES_PUBLIC_BASE_URL}/${key}` : null;
-    return { ok: true, url };
+    const binary = atob(output.image);
+    const arr = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+    return { ok: true, bytes: arr.buffer };
   } catch (err) {
     return { ok: false, error: String(err) };
   }
 }
 
-async function generateAndStoreImage(
+async function latestReviewIsApproved(env: ImageEnv, entityType: EntityType, entityId: number, marker = ''): Promise<boolean> {
+  const review = await env.DB
+    .prepare(
+      `SELECT status FROM image_reviews
+       WHERE entity_type = ? AND entity_id = ? AND marker = ?
+       ORDER BY id DESC LIMIT 1`
+    )
+    .bind(entityType, entityId, marker)
+    .first<{ status: string }>();
+  return review?.status === 'godkendt';
+}
+
+async function recordReview(
   env: ImageEnv,
-  table: 'recipes' | 'articles',
-  row: { id: number; slug: string },
-  recipeSpecificPrompt: string
-): Promise<{ ok: boolean; error?: string }> {
-  const key = `${table}/${row.slug}.png`;
-
-  await env.DB.prepare(`UPDATE ${table} SET image_status = 'under_generering', image_prompt = ? WHERE id = ?`)
-    .bind(recipeSpecificPrompt, row.id)
+  entityType: EntityType,
+  entityId: number,
+  marker: string,
+  attempt: number,
+  candidateUrl: string | null,
+  review: ImageReview
+) {
+  await env.DB
+    .prepare(
+      `INSERT INTO image_reviews
+       (entity_type, entity_id, marker, attempt, status, score, reason, observed_subject, retry_instruction, candidate_url, review_model)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .bind(
+      entityType,
+      entityId,
+      marker,
+      attempt,
+      review.approved ? 'godkendt' : 'afvist',
+      review.score,
+      review.reason,
+      review.observedDish,
+      review.retryInstruction,
+      candidateUrl,
+      IMAGE_REVIEW_MODEL
+    )
     .run();
+}
 
-  const result = await runImageGeneration(env, buildFullPrompt(recipeSpecificPrompt, row.slug), key);
+async function reviewedGeneration(
+  env: ImageEnv,
+  options: {
+    entityType: 'recipe' | 'article';
+    table: 'recipes' | 'articles';
+    row: { id: number; slug: string };
+    specificPrompt: string;
+    reviewTarget: ReviewTarget;
+    force?: boolean;
+  }
+): Promise<ImageOutcome> {
+  const current = await env.DB
+    .prepare(`SELECT image_status, image_url FROM ${options.table} WHERE id = ?`)
+    .bind(options.row.id)
+    .first<{ image_status: string; image_url: string | null }>();
 
-  if (!result.ok) {
-    await env.DB.prepare(`UPDATE ${table} SET image_status = 'fejlet' WHERE id = ?`).bind(row.id).run();
-    return { ok: false, error: result.error };
+  if (
+    !options.force &&
+    current?.image_status === 'klar' &&
+    current.image_url &&
+    (await latestReviewIsApproved(env, options.entityType, options.row.id))
+  ) {
+    return { ok: true, url: current.image_url, reused: true };
   }
 
-  await env.DB.prepare(
-    `UPDATE ${table} SET image_url = ?, image_model = ?, image_status = 'klar', image_version = image_version + 1 WHERE id = ?`
-  )
-    .bind(result.url, PRODUCTION_IMAGE_MODEL, row.id)
+  await env.DB
+    .prepare(`UPDATE ${options.table} SET image_status = 'under_generering', image_prompt = ? WHERE id = ?`)
+    .bind(options.specificPrompt, options.row.id)
     .run();
 
-  return { ok: true };
+  let attemptPrompt = options.specificPrompt;
+  let lastReview: ImageReview | undefined;
+  let lastError: string | undefined;
+  const runId = crypto.randomUUID();
+
+  for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+    const seed = `${options.row.slug}-quality-v2-${attempt}`;
+    const generated = await runImageGeneration(env, buildFullPrompt(attemptPrompt, seed), seed);
+    if (!generated.ok) {
+      lastError = generated.error;
+      continue;
+    }
+
+    const review = await reviewGeneratedImage(env, generated.bytes, options.reviewTarget);
+    lastReview = review;
+    const candidateKey = `review/${options.table}/${options.row.slug}/${runId}-attempt-${attempt}.png`;
+    await env.IMAGES.put(candidateKey, generated.bytes, { httpMetadata: { contentType: 'image/png' } });
+    const candidateUrl = publicUrl(env, candidateKey);
+    await recordReview(env, options.entityType, options.row.id, '', attempt, candidateUrl, review);
+
+    if (review.approved) {
+      // En unik URL forhindrer, at browser eller CDN viser en cachet, ældre version.
+      const finalKey = `${options.table}/${options.row.slug}-${runId}.png`;
+      await env.IMAGES.put(finalKey, generated.bytes, { httpMetadata: { contentType: 'image/png' } });
+      const url = publicUrl(env, finalKey);
+      await env.DB
+        .prepare(
+          `UPDATE ${options.table}
+           SET image_url = ?, image_model = ?, image_status = 'klar', image_version = image_version + 1
+           WHERE id = ?`
+        )
+        .bind(url, PRODUCTION_IMAGE_MODEL, options.row.id)
+        .run();
+      return { ok: true, url, review };
+    }
+
+    attemptPrompt = [
+      options.specificPrompt,
+      `The previous attempt was rejected by the photo editor: ${review.reason}`,
+      review.retryInstruction ? `Correct it as follows: ${review.retryInstruction}` : '',
+      'Make the next image a literal and unmistakable depiction of the requested subject.',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  await env.DB.prepare(`UPDATE ${options.table} SET image_status = 'fejlet' WHERE id = ?`).bind(options.row.id).run();
+  return {
+    ok: false,
+    error: lastReview
+      ? `Billedet blev afvist efter ${MAX_GENERATION_ATTEMPTS} forsøg (${lastReview.score}/100): ${lastReview.reason}`
+      : lastError || 'Billedgenereringen fejlede.',
+    review: lastReview,
+  };
 }
 
-// Fejler en generering, sættes status til 'fejlet' i stedet for at kaste, så udgivelsen
-// af selve opskriften eller artiklen ikke blokeres af et enkelt mislykket billede.
-export async function ensureRecipeImage(env: ImageEnv, recipe: RecipeRow) {
-  return generateAndStoreImage(env, 'recipes', recipe, buildRecipePrompt(recipe));
+export async function ensureRecipeImage(env: ImageEnv, recipe: RecipeRow, force = false): Promise<ImageOutcome> {
+  return reviewedGeneration(env, {
+    entityType: 'recipe',
+    table: 'recipes',
+    row: recipe,
+    specificPrompt: buildRecipePrompt(recipe),
+    reviewTarget: { kind: 'recipe', value: recipe },
+    force,
+  });
 }
 
-export async function ensureArticleImage(env: ImageEnv, article: ArticleRow) {
-  return generateAndStoreImage(env, 'articles', article, buildArticlePrompt(article));
+export async function ensureArticleImage(env: ImageEnv, article: ArticleRow, force = false): Promise<ImageOutcome> {
+  return reviewedGeneration(env, {
+    entityType: 'article',
+    table: 'articles',
+    row: article,
+    specificPrompt: buildArticlePrompt(article),
+    reviewTarget: { kind: 'article', value: article },
+    force,
+  });
 }
 
-// Finder [[image:id|prompt]] markører i brødteksten, opretter rækker i article_images
-// for nye markører, og genererer billeder for dem, der endnu mangler.
 export async function ensureArticleBodyImages(
   env: ImageEnv,
-  article: { id: number; slug: string; body: string }
+  article: { id: number; slug: string; title: string; body: string },
+  force = false
 ): Promise<Array<{ marker: string; ok: boolean; error?: string }>> {
   const matches = [...article.body.matchAll(BODY_IMAGE_MARKER)];
   if (matches.length === 0) return [];
 
   const outcomes: Array<{ marker: string; ok: boolean; error?: string }> = [];
-
   for (const match of matches) {
     const [, marker, prompt] = match;
-
-    await env.DB.prepare(
-      `INSERT INTO article_images (article_id, marker, prompt) VALUES (?, ?, ?)
-       ON CONFLICT(article_id, marker) DO NOTHING`
-    )
+    await env.DB
+      .prepare(
+        `INSERT INTO article_images (article_id, marker, prompt) VALUES (?, ?, ?)
+         ON CONFLICT(article_id, marker) DO UPDATE SET prompt = excluded.prompt`
+      )
       .bind(article.id, marker, prompt.trim())
       .run();
 
-    const row = await env.DB.prepare(
-      `SELECT id, image_status FROM article_images WHERE article_id = ? AND marker = ?`
-    )
+    const row = await env.DB
+      .prepare(`SELECT id, image_url, image_status FROM article_images WHERE article_id = ? AND marker = ?`)
       .bind(article.id, marker)
-      .first<{ id: number; image_status: string }>();
+      .first<{ id: number; image_url: string | null; image_status: string }>();
 
-    if (!row || row.image_status === 'klar') {
+    if (!row) {
+      outcomes.push({ marker, ok: false, error: 'Kunne ikke oprette billedrækken.' });
+      continue;
+    }
+    if (
+      !force &&
+      row.image_status === 'klar' &&
+      row.image_url &&
+      (await latestReviewIsApproved(env, 'article_body', row.id, marker))
+    ) {
       outcomes.push({ marker, ok: true });
       continue;
     }
 
-    const key = `articles/${article.slug}/${marker}.png`;
     await env.DB.prepare(`UPDATE article_images SET image_status = 'under_generering' WHERE id = ?`).bind(row.id).run();
+    let attemptPrompt = prompt.trim();
+    let approved = false;
+    let lastReview: ImageReview | undefined;
+    let lastError: string | undefined;
+    const runId = crypto.randomUUID();
 
-    const result = await runImageGeneration(env, buildFullPrompt(prompt.trim(), `${article.slug}-${marker}`), key);
+    for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+      const seed = `${article.slug}-${marker}-quality-v2-${attempt}`;
+      const generated = await runImageGeneration(env, buildFullPrompt(attemptPrompt, seed), seed);
+      if (!generated.ok) {
+        lastError = generated.error;
+        continue;
+      }
 
-    if (!result.ok) {
-      await env.DB.prepare(`UPDATE article_images SET image_status = 'fejlet' WHERE id = ?`).bind(row.id).run();
-      outcomes.push({ marker, ok: false, error: result.error });
-      continue;
+      const review = await reviewGeneratedImage(env, generated.bytes, {
+        kind: 'article_body',
+        title: article.title,
+        prompt: prompt.trim(),
+      });
+      lastReview = review;
+      const candidateKey = `review/articles/${article.slug}/${marker}-${runId}-attempt-${attempt}.png`;
+      await env.IMAGES.put(candidateKey, generated.bytes, { httpMetadata: { contentType: 'image/png' } });
+      const candidateUrl = publicUrl(env, candidateKey);
+      await recordReview(env, 'article_body', row.id, marker, attempt, candidateUrl, review);
+
+      if (review.approved) {
+        const finalKey = `articles/${article.slug}/${marker}-${runId}.png`;
+        await env.IMAGES.put(finalKey, generated.bytes, { httpMetadata: { contentType: 'image/png' } });
+        await env.DB
+          .prepare(`UPDATE article_images SET image_url = ?, image_model = ?, image_status = 'klar' WHERE id = ?`)
+          .bind(publicUrl(env, finalKey), PRODUCTION_IMAGE_MODEL, row.id)
+          .run();
+        approved = true;
+        break;
+      }
+
+      attemptPrompt = `${prompt.trim()}. Previous attempt rejected: ${review.reason}. ${review.retryInstruction}`;
     }
 
-    await env.DB.prepare(
-      `UPDATE article_images SET image_url = ?, image_model = ?, image_status = 'klar' WHERE id = ?`
-    )
-      .bind(result.url, PRODUCTION_IMAGE_MODEL, row.id)
-      .run();
-    outcomes.push({ marker, ok: true });
+    if (!approved) {
+      await env.DB.prepare(`UPDATE article_images SET image_status = 'fejlet' WHERE id = ?`).bind(row.id).run();
+      outcomes.push({
+        marker,
+        ok: false,
+        error: lastReview
+          ? `Billedet blev afvist (${lastReview.score}/100): ${lastReview.reason}`
+          : lastError || 'Billedgenereringen fejlede.',
+      });
+    } else {
+      outcomes.push({ marker, ok: true });
+    }
   }
 
   return outcomes;
