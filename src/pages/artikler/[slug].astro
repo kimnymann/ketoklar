@@ -5,6 +5,7 @@ import { CATEGORY_LABELS, formatPublishedDate } from '../../lib/db';
 import { parseArticleBody } from '../../lib/articleBody';
 import { KETO_FOOD_LIST } from '../../lib/ketoFoodList';
 import AnecdoteArticle from '../../components/AnecdoteArticle.astro';
+import { absoluteUrl, breadcrumbJsonLd, toIsoDateTime } from '../../lib/seo';
 import { env } from "cloudflare:workers";
 
 const { slug } = Astro.params;
@@ -58,9 +59,38 @@ if (article.category === 'anekdote') {
     nextAnecdote = anecdotes[(currentIndex + 1) % anecdotes.length] ?? null;
   }
 }
+
+const articleDescription = article.excerpt ?? `${article.title} – læs artiklen på Ketoklar.`;
+const articleUrl = absoluteUrl(`/artikler/${article.slug}`);
+const articleStructuredData = {
+  '@type': 'BlogPosting',
+  '@id': `${articleUrl}#article`,
+  headline: article.title,
+  description: articleDescription,
+  ...(article.image_url ? { image: [absoluteUrl(article.image_url)] } : {}),
+  ...(toIsoDateTime(article.published_at) ? { datePublished: toIsoDateTime(article.published_at) } : {}),
+  mainEntityOfPage: articleUrl,
+  inLanguage: 'da-DK',
+  publisher: { '@id': 'https://ketoklar.dk/#organization' },
+  isPartOf: { '@id': 'https://ketoklar.dk/#website' },
+  articleSection: article.category === 'anekdote' ? 'Anekdoter' : article.category,
+};
 ---
 
-<Layout title={article.title} description={article.excerpt ?? undefined}>
+<Layout
+  title={article.title}
+  description={articleDescription}
+  image={article.image_url}
+  pageType="article"
+  structuredData={[
+    articleStructuredData,
+    breadcrumbJsonLd([
+      { name: 'Forside', path: '/' },
+      { name: article.category === 'anekdote' ? 'Anekdoter' : 'Artikler', path: article.category === 'anekdote' ? '/artikler/anekdoter' : '/artikler' },
+      { name: article.title, path: `/artikler/${article.slug}` },
+    ]),
+  ]}
+>
   {article.category === 'anekdote' ? (
     <AnecdoteArticle
       article={article}
@@ -78,7 +108,7 @@ if (article.category === 'anekdote') {
       <div>
         <div class="flex items-baseline gap-3">
           <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--paper-light);">{article.category}</span>
-          <span class="text-xs" style="color: var(--paper);">{formatPublishedDate(article.published_at)}</span>
+          <time datetime={toIsoDateTime(article.published_at)} class="text-xs" style="color: var(--paper);">{formatPublishedDate(article.published_at)}</time>
         </div>
         <h1 class="font-display text-3xl md:text-4xl font-700 mt-1" style="color: var(--paper-light);">{article.title}</h1>
       </div>
@@ -88,7 +118,7 @@ if (article.category === 'anekdote') {
     <div class="max-w-3xl mx-auto mb-8">
       <div class="flex items-baseline justify-between">
         <span class="text-xs uppercase tracking-wide font-semibold" style="color: var(--rust);">{article.category}</span>
-        <span class="text-xs" style="color: var(--sage);">{formatPublishedDate(article.published_at)}</span>
+        <time datetime={toIsoDateTime(article.published_at)} class="text-xs" style="color: var(--sage);">{formatPublishedDate(article.published_at)}</time>
       </div>
       <h1 class="font-display text-3xl md:text-4xl font-700 mt-1" style="color: var(--ink);">{article.title}</h1>
     </div>

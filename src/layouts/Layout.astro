@@ -1,14 +1,57 @@
 ---
 import '../styles/global.css';
 import BrandMark from '../components/BrandMark.astro';
+import { SITE_URL, absoluteUrl } from '../lib/seo';
 
 interface Props {
   title: string;
   description?: string;
   wide?: boolean;
+  image?: string | null;
+  canonicalPath?: string;
+  pageType?: 'website' | 'article';
+  structuredData?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
-const { title, description = 'Ketoklar, dit keto univers af opskrifter, artikler og anekdoter.', wide = false } = Astro.props;
+const {
+  title,
+  description = 'Keto-opskrifter, viden og historier for mennesker, der godt kan lide rigtig mad.',
+  wide = false,
+  image,
+  canonicalPath,
+  pageType = 'website',
+  structuredData,
+} = Astro.props;
+
+const pageTitle = `${title} · Ketoklar`;
+const canonicalUrl = absoluteUrl(canonicalPath ?? Astro.url.pathname);
+const imageUrl = image ? absoluteUrl(image) : undefined;
+const additionalStructuredData = structuredData
+  ? (Array.isArray(structuredData) ? structuredData : [structuredData])
+  : [];
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      name: 'Ketoklar',
+      url: `${SITE_URL}/`,
+      logo: absoluteUrl('/favicon.svg'),
+      email: 'hej@ketoklar.dk',
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      name: 'Ketoklar',
+      alternateName: 'KetoKlar',
+      url: `${SITE_URL}/`,
+      inLanguage: 'da-DK',
+      publisher: { '@id': `${SITE_URL}/#organization` },
+    },
+    ...additionalStructuredData,
+  ],
+}).replace(/</g, '\\u003c');
 
 const today = new Intl.DateTimeFormat('da-DK', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 ---
@@ -19,9 +62,23 @@ const today = new Intl.DateTimeFormat('da-DK', { weekday: 'long', day: 'numeric'
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="theme-color" content="#143f2d" />
+    <link rel="canonical" href={canonicalUrl} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
-    <title>{title} · Ketoklar</title>
+    <meta property="og:site_name" content="Ketoklar" />
+    <meta property="og:locale" content="da_DK" />
+    <meta property="og:type" content={pageType} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    {imageUrl && <meta property="og:image" content={imageUrl} />}
+    <meta name="twitter:card" content={imageUrl ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    {imageUrl && <meta name="twitter:image" content={imageUrl} />}
+    <script type="application/ld+json" is:inline set:html={jsonLd}></script>
+    <title>{pageTitle}</title>
   </head>
   <body>
     <div class="edition-bar">

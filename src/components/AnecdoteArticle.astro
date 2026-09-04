@@ -2,6 +2,7 @@
 import type { Article, Recipe } from '../lib/db';
 import { CATEGORY_LABELS, formatPublishedDate } from '../lib/db';
 import { parseArticleBody } from '../lib/articleBody';
+import { toIsoDateTime } from '../lib/seo';
 
 type BodyImage = { marker: string; image_url: string | null; image_status: string };
 
@@ -41,7 +42,7 @@ const minutes = Math.max(1, Math.ceil(article.body.trim().split(/\s+/).length / 
       </div>
       <h1>{article.title}</h1>
       {article.excerpt && <p>“{article.excerpt}”</p>}
-      <time datetime={article.published_at ?? undefined}>{formatPublishedDate(article.published_at)}</time>
+      <time datetime={toIsoDateTime(article.published_at)}>{formatPublishedDate(article.published_at)}</time>
     </div>
   </header>
 

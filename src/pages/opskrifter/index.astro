@@ -2,10 +2,15 @@
 import Layout from '../../layouts/Layout.astro';
 import type { Recipe } from '../../lib/db';
 import { CATEGORY_LABELS } from '../../lib/db';
+import { absoluteUrl } from '../../lib/seo';
 
 import { env } from "cloudflare:workers";
 const db = env.DB;
-const category = Astro.url.searchParams.get('kategori');
+const categories: Array<Recipe['category']> = ['morgen', 'frokost', 'aften', 'laekkerier'];
+const requestedCategory = Astro.url.searchParams.get('kategori');
+const category = categories.includes(requestedCategory as Recipe['category'])
+  ? requestedCategory as Recipe['category']
+  : null;
 
 const query = category
   ? db.prepare(`SELECT * FROM recipes WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') AND category = ? ORDER BY published_at DESC`).bind(category)
@@ -13,11 +18,58 @@ const query = category
 
 const { results: recipes } = await query.all<Recipe>();
 
-const categories: Array<Recipe['category']> = ['morgen', 'frokost', 'aften', 'laekkerier'];
+const categorySeo: Record<Recipe['category'], { title: string; heading: string; description: string }> = {
+  morgen: {
+    title: 'Keto-morgenmad – nemme opskrifter',
+    heading: 'Keto-opskrifter til morgenmad',
+    description: 'Find nemme opskrifter på keto-morgenmad med få kulhydrater, tydeligt næringsindhold og enkel fremgangsmåde.',
+  },
+  frokost: {
+    title: 'Keto-frokost – nemme opskrifter',
+    heading: 'Keto-opskrifter til frokost',
+    description: 'Find mættende keto-frokoster med få kulhydrater, tydeligt næringsindhold og enkel fremgangsmåde.',
+  },
+  aften: {
+    title: 'Keto-aftensmad – nemme opskrifter',
+    heading: 'Keto-opskrifter til aftensmad',
+    description: 'Find velsmagende keto-aftensmad med få kulhydrater, tydeligt næringsindhold og enkel fremgangsmåde.',
+  },
+  laekkerier: {
+    title: 'Keto-lækkerier – opskrifter med få kulhydrater',
+    heading: 'Keto-opskrifter på lækkerier',
+    description: 'Find keto-lækkerier og søde opskrifter med få kulhydrater, tydeligt næringsindhold og enkel fremgangsmåde.',
+  },
+};
+const seo = category
+  ? categorySeo[category]
+  : {
+      title: 'Keto-opskrifter – morgenmad, frokost og aftensmad',
+      heading: 'Keto-opskrifter',
+      description: 'Find nemme keto-opskrifter til morgenmad, frokost, aftensmad og lækkerier med næringsindhold og trin-for-trin vejledning.',
+    };
+const canonicalPath = category ? `/opskrifter?kategori=${category}` : '/opskrifter';
+const itemList = {
+  '@type': 'ItemList',
+  name: seo.heading,
+  numberOfItems: recipes.length,
+  itemListElement: recipes.map((recipe, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    url: absoluteUrl(`/opskrifter/${recipe.slug}`),
+    name: recipe.title,
+  })),
+};
 ---
 
-<Layout title="Opskrifter">
-  <h1 class="text-3xl font-display font-600 mb-6">Opskrifter</h1>
+<Layout
+  title={seo.title}
+  description={seo.description}
+  image={recipes[0]?.image_url}
+  canonicalPath={canonicalPath}
+  structuredData={itemList}
+>
+  <h1 class="text-3xl font-display font-600 mb-3">{seo.heading}</h1>
+  <p class="text-[var(--ink)] mb-6">{seo.description}</p>
 
   <div class="flex gap-2 mb-8 flex-wrap">
     <a href="/opskrifter" class={`px-4 py-2 rounded-full text-sm font-medium border ${!category ? 'bg-[var(--rust)] text-white border-[var(--rust)]' : 'border-[var(--sage)]/40 text-[var(--ink)]'}`}>
@@ -45,7 +97,7 @@ const categories: Array<Recipe['category']> = ['morgen', 'frokost', 'aften', 'la
         )}
         <div class="p-5">
           <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[r.category]}</span>
-          <h3 class="text-lg font-display font-600 mt-1">{r.title}</h3>
+          <h2 class="text-lg font-display font-600 mt-1">{r.title}</h2>
           <p class="text-sm text-[var(--sage)] mt-2">{r.kcal} kcal · {r.carbs_g} g kulhydrat · {r.prep_minutes} min</p>
         </div>
       </a>

@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import type { Article } from '../../lib/db';
 import { formatPublishedDate } from '../../lib/db';
+import { absoluteUrl, toIsoDateTime } from '../../lib/seo';
 
 import { env } from "cloudflare:workers";
 const db = env.DB;
@@ -13,9 +14,21 @@ const { results: anecdotes } = await db
 const featured = anecdotes[0];
 const archive = anecdotes.slice(1);
 const readingTime = (body: string) => Math.max(1, Math.ceil(body.trim().split(/\s+/).length / 180));
+const description = 'Korte, skæve og genkendelige historier fra et liv med keto – om madpakker, familiemiddage og velmenende råd.';
+const itemList = {
+  '@type': 'ItemList',
+  name: 'Anekdoter fra keto-livet',
+  numberOfItems: anecdotes.length,
+  itemListElement: anecdotes.map((anecdote, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    url: absoluteUrl(`/artikler/${anecdote.slug}`),
+    name: anecdote.title,
+  })),
+};
 ---
 
-<Layout title="Anekdoter" description="Korte, skæve historier fra et liv med keto.">
+<Layout title="Anekdoter fra livet med keto" description={description} image={featured?.image_url} structuredData={itemList}>
   <header class="anecdote-intro" data-reveal>
     <div>
       <span class="anecdote-intro__eyebrow">Keto i virkeligheden</span>
@@ -73,7 +86,7 @@ const readingTime = (body: string) => Math.max(1, Math.ceil(body.trim().split(/\
               <h3>{anecdote.title}</h3>
               {anecdote.excerpt && <p>“{anecdote.excerpt}”</p>}
               <div class="anecdote-card__footer">
-                <time datetime={anecdote.published_at ?? undefined}>{formatPublishedDate(anecdote.published_at)}</time>
+                <time datetime={toIsoDateTime(anecdote.published_at)}>{formatPublishedDate(anecdote.published_at)}</time>
                 <span aria-hidden="true">↗</span>
               </div>
             </div>

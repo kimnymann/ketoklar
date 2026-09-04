@@ -4,6 +4,7 @@ import RecipeRating from '../../components/RecipeRating.astro';
 import type { Recipe, Article } from '../../lib/db';
 import { CATEGORY_LABELS, formatPublishedDate } from '../../lib/db';
 import { groupIngredientsByCategory, splitInstructionsIntoSteps } from '../../lib/ingredientCategory';
+import { absoluteUrl, breadcrumbJsonLd, toIsoDateTime } from '../../lib/seo';
 
 const { slug } = Astro.params;
 import { env } from "cloudflare:workers";
@@ -51,9 +52,64 @@ try {
 
 const isLocal = Astro.url.hostname === 'localhost' || Astro.url.hostname === '127.0.0.1';
 const turnstileSiteKey = isLocal ? '1x00000000000000000000AA' : (env.TURNSTILE_SITE_KEY ?? '');
+
+const recipeDescription = `Keto-opskrift på ${recipe.title} med ${recipe.carbs_g} g kulhydrat pr. portion. Se ingredienser, næringsindhold og fremgangsmåde.`;
+const recipeUrl = absoluteUrl(`/opskrifter/${recipe.slug}`);
+const recipeStructuredData = {
+  '@type': 'Recipe',
+  '@id': `${recipeUrl}#recipe`,
+  name: recipe.title,
+  description: recipeDescription,
+  ...(recipe.image_url ? { image: [absoluteUrl(recipe.image_url)] } : {}),
+  ...(toIsoDateTime(recipe.published_at) ? { datePublished: toIsoDateTime(recipe.published_at) } : {}),
+  author: { '@id': 'https://ketoklar.dk/#organization' },
+  mainEntityOfPage: recipeUrl,
+  recipeCategory: CATEGORY_LABELS[recipe.category],
+  keywords: `keto, ${CATEGORY_LABELS[recipe.category].toLowerCase()}, lavt kulhydratindhold`,
+  recipeYield: `${recipe.servings} portioner`,
+  ...(recipe.prep_minutes ? { totalTime: `PT${recipe.prep_minutes}M` } : {}),
+  recipeIngredient: ingredients.map((ingredient) =>
+    `${ingredient.amount > 0 ? `${ingredient.amount}${ingredient.unit ? ` ${ingredient.unit}` : ''} ` : ''}${ingredient.name}`
+  ),
+  recipeInstructions: steps.map((step, index) => ({
+    '@type': 'HowToStep',
+    position: index + 1,
+    text: step,
+    url: `${recipeUrl}#trin-${index + 1}`,
+  })),
+  nutrition: {
+    '@type': 'NutritionInformation',
+    ...(recipe.kcal !== null ? { calories: `${recipe.kcal} kcal` } : {}),
+    ...(recipe.carbs_g !== null ? { carbohydrateContent: `${recipe.carbs_g} g` } : {}),
+    ...(recipe.fat_g !== null ? { fatContent: `${recipe.fat_g} g` } : {}),
+    ...(recipe.protein_g !== null ? { proteinContent: `${recipe.protein_g} g` } : {}),
+  },
+  ...(ratingSummary.count > 0 ? {
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: ratingSummary.average,
+      ratingCount: ratingSummary.count,
+      bestRating: 5,
+      worstRating: 1,
+    },
+  } : {}),
+};
 ---
 
-<Layout title={recipe.title}>
+<Layout
+  title={recipe.title}
+  description={recipeDescription}
+  image={recipe.image_url}
+  pageType="article"
+  structuredData={[
+    recipeStructuredData,
+    breadcrumbJsonLd([
+      { name: 'Forside', path: '/' },
+      { name: 'Opskrifter', path: '/opskrifter' },
+      { name: recipe.title, path: `/opskrifter/${recipe.slug}` },
+    ]),
+  ]}
+>
   {recipe.image_url ? (
     <img src={recipe.image_url} alt={recipe.title} class="w-full aspect-[21/9] object-cover rounded-sm mb-6" />
   ) : (
@@ -62,7 +118,7 @@ const turnstileSiteKey = isLocal ? '1x00000000000000000000AA' : (env.TURNSTILE_S
 
   <div class="flex items-baseline justify-between">
     <span class="text-xs uppercase tracking-wide text-[var(--rust)] font-semibold">{CATEGORY_LABELS[recipe.category]}</span>
-    <span class="text-xs text-[var(--sage)]">{formatPublishedDate(recipe.published_at)}</span>
+    <time datetime={toIsoDateTime(recipe.published_at)} class="text-xs text-[var(--sage)]">{formatPublishedDate(recipe.published_at)}</time>
   </div>
   <h1 class="text-3xl font-display font-600 mt-1 mb-4">{recipe.title}</h1>
   <p class="text-sm text-[var(--sage)] mb-8">
@@ -101,7 +157,7 @@ const turnstileSiteKey = isLocal ? '1x00000000000000000000AA' : (env.TURNSTILE_S
         <h2 class="text-xl font-display font-600 mb-4">Fremgangsmåde</h2>
         <ol class="space-y-4">
           {steps.map((step, index) => (
-            <li class="flex gap-4">
+            <li id={`trin-${index + 1}`} class="flex gap-4">
               <span
                 class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-display font-600"
                 style="background-color: var(--rust); color: var(--paper-light);"

@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import type { Article } from '../../lib/db';
+import { absoluteUrl } from '../../lib/seo';
 
 import { env } from "cloudflare:workers";
 const db = env.DB;
@@ -8,10 +9,23 @@ const db = env.DB;
 const { results: articles } = await db
   .prepare(`SELECT * FROM articles WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now') AND category IN ('videnskab','livsstil') ORDER BY published_at DESC`)
   .all<Article>();
+
+const description = 'Læs danske artikler om keto, fedt, kulhydrater og hverdagen med ketogen kost – skrevet uden løftede pegefingre.';
+const itemList = {
+  '@type': 'ItemList',
+  name: 'Artikler om keto',
+  numberOfItems: articles.length,
+  itemListElement: articles.map((article, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    url: absoluteUrl(`/artikler/${article.slug}`),
+    name: article.title,
+  })),
+};
 ---
 
-<Layout title="Artikler">
-  <h1 class="text-3xl font-display font-600 mb-6">Artikler</h1>
+<Layout title="Artikler om keto, kost og livsstil" description={description} image={articles[0]?.image_url} structuredData={itemList}>
+  <h1 class="text-3xl font-display font-600 mb-6">Artikler om keto</h1>
   <p class="text-[var(--ink)] mb-8">Videnskaben bag keto, og hvorfor det er den fede måde at leve på.</p>
 
   <div class="grid sm:grid-cols-2 gap-6">

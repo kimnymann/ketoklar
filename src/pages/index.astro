@@ -35,7 +35,12 @@ const departmentEntries = await Promise.all(
 const featuredRecipes = departmentEntries.flatMap((entry) => entry.recipes.slice(0, 1));
 ---
 
-<Layout title="Forside" wide>
+<Layout
+  title="Keto-opskrifter, artikler og ægte historier"
+  description="Keto uden løftede pegefingre: nemme opskrifter, brugbar viden og levende historier for mennesker, der godt kan lide rigtig mad."
+  image={lead?.image_url}
+  wide
+>
   <div class="home-intro site-frame">
     <p data-reveal>Keto uden løftede pegefingre</p>
     <span data-reveal>Opskrifter, viden og historier for mennesker, der godt kan lide rigtig mad.</span>
