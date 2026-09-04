@@ -3,6 +3,7 @@ import type { Article, Recipe } from '../lib/db';
 import { CATEGORY_LABELS, formatPublishedDate } from '../lib/db';
 import { parseArticleBody } from '../lib/articleBody';
 import { toIsoDateTime } from '../lib/seo';
+import ArticleAuthor from './ArticleAuthor.astro';
 
 type BodyImage = { marker: string; image_url: string | null; image_status: string };
 
@@ -46,6 +47,8 @@ const minutes = Math.max(1, Math.ceil(article.body.trim().split(/\s+/).length / 
     </div>
   </header>
 
+  <ArticleAuthor />
+
   {isLocked ? (
     <div class="anecdote-story__locked">
       <span aria-hidden="true">✦</span>
@@ -61,6 +64,9 @@ const minutes = Math.max(1, Math.ceil(article.body.trim().split(/\s+/).length / 
         }
         if (block.type === 'quote') {
           return <blockquote><span aria-hidden="true">“</span><p>{block.text}</p></blockquote>;
+        }
+        if (block.type === 'list') {
+          return <ul>{block.items.map((item) => <li set:html={item} />)}</ul>;
         }
         if (block.type === 'recipe') {
           const recipe = recipesBySlug.get(block.slug);
@@ -134,6 +140,8 @@ const minutes = Math.max(1, Math.ceil(article.body.trim().split(/\s+/).length / 
   .anecdote-copy > p:first-child { margin-top: 0; }
   .anecdote-copy > p:first-child::first-letter { float: left; margin: .12em .12em 0 0; color: var(--tomato); font-size: 5.2em; font-weight: 600; line-height: .7; }
   .anecdote-copy h2 { margin: 3.5rem 0 1rem; font-family: var(--font-body); font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .anecdote-copy > ul { display: grid; gap: .8rem; margin: 1.75rem 0; padding-left: 1.4rem; list-style: disc; }
+  .anecdote-copy > ul li::marker { color: var(--tomato); }
   .anecdote-copy blockquote { position: relative; width: min(55rem, calc(100vw - 2rem)); margin: 4rem 50%; padding: clamp(2.5rem, 6vw, 4.5rem); border-radius: var(--radius-md); color: var(--ink); background: var(--sky); transform: translateX(-50%); }
   .anecdote-copy blockquote span { position: absolute; top: -1.8rem; left: 1.5rem; color: var(--tomato); font-size: 9rem; line-height: 1; }
   .anecdote-copy blockquote p { position: relative; font-size: clamp(1.8rem, 4vw, 3.2rem); font-style: italic; font-weight: 550; letter-spacing: -.04em; line-height: 1.05; }

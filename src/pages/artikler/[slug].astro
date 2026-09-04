@@ -5,6 +5,7 @@ import { CATEGORY_LABELS, formatPublishedDate } from '../../lib/db';
 import { parseArticleBody } from '../../lib/articleBody';
 import { KETO_FOOD_LIST } from '../../lib/ketoFoodList';
 import AnecdoteArticle from '../../components/AnecdoteArticle.astro';
+import ArticleAuthor from '../../components/ArticleAuthor.astro';
 import { absoluteUrl, breadcrumbJsonLd, toIsoDateTime } from '../../lib/seo';
 import { env } from "cloudflare:workers";
 
@@ -72,6 +73,12 @@ const articleStructuredData = {
   mainEntityOfPage: articleUrl,
   inLanguage: 'da-DK',
   publisher: { '@id': 'https://ketoklar.dk/#organization' },
+  author: {
+    '@type': 'Person',
+    '@id': 'https://ketoklar.dk/om-kim-sax#person',
+    name: 'Kim Sax',
+    url: 'https://ketoklar.dk/om-kim-sax',
+  },
   isPartOf: { '@id': 'https://ketoklar.dk/#website' },
   articleSection: article.category === 'anekdote' ? 'Anekdoter' : article.category,
 };
@@ -124,6 +131,8 @@ const articleStructuredData = {
     </div>
   )}
 
+  <ArticleAuthor />
+
   {isLocked ? (
     <div class="bg-[var(--paper-light)] border border-[var(--ink)]/15 rounded-2xl p-10 text-center">
       <p class="text-lg font-semibold mb-2">Denne artikel er kun for abonnenter.</p>
@@ -143,6 +152,13 @@ const articleStructuredData = {
             <blockquote class="border-l-4 pl-5 py-1 my-2" style="border-color: var(--rust);">
               <p class="font-display text-xl italic" style="color: var(--rust-dark);">{block.text}</p>
             </blockquote>
+          );
+        }
+        if (block.type === 'list') {
+          return (
+            <ul class="list-disc space-y-2 pl-6 marker:text-[var(--rust)]">
+              {block.items.map((item) => <li set:html={item} />)}
+            </ul>
           );
         }
         if (block.type === 'recipe') {

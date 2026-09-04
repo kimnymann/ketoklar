@@ -1,0 +1,103 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { absoluteUrl } from '../lib/seo';
+
+const description = 'Mød Kim Sax, grundlægger og redaktør på Ketoklar, og læs historien om diabetes, keto og en krop, der endelig faldt mere til ro.';
+const authorUrl = absoluteUrl('/om-kim-sax');
+const structuredData = {
+  '@type': 'Person',
+  '@id': `${authorUrl}#person`,
+  name: 'Kim Sax',
+  url: authorUrl,
+  jobTitle: 'Grundlægger og redaktør',
+  worksFor: { '@id': 'https://ketoklar.dk/#organization' },
+};
+---
+
+<Layout title="Om Kim Sax – manden bag magasinet" description={description} structuredData={structuredData}>
+  <article class="author-page">
+    <header class="author-hero" data-reveal>
+      <div class="author-hero__monogram" aria-hidden="true">KS</div>
+      <div>
+        <span class="author-kicker">Manden bag Ketoklar</span>
+        <h1>Jeg hedder Kim.<br />Og min krop er endelig faldet mere til ro.</h1>
+        <p>Jeg står bag Ketoklar, fordi keto for mig blev langt mere end en kostplan. Det blev begyndelsen på et roligere forhold til både blodsukker, mave og hverdagsmad.</p>
+      </div>
+    </header>
+
+    <div class="author-copy">
+      <section>
+        <span class="section-number">01</span>
+        <div>
+          <h2>Det begyndte med et alt for højt blodsukker</h2>
+          <p>For flere år siden fik jeg sukkersyge. Mit blodsukker havde været meget højt i omkring et år, og jeg blev anbefalet at prøve keto for at få bedre styr på det.</p>
+          <p>Det virkede for mig. Efter omkring et år med keto kom mit blodsukker ned på et niveau, hvor jeg ikke længere oplevede sukkersygen som en aktiv del af min hverdag. Sundhedsfagligt vil man ofte kalde det remission frem for helbredelse, fordi tilstanden kan vende tilbage. For mig var forskellen stadig temmelig konkret: Tallene faldt, og kroppen begyndte at føles som min egen igen.</p>
+          <blockquote>Jeg begyndte på keto på grund af mit blodsukker. Jeg blev ved, fordi resten af kroppen også syntes, det var en glimrende idé.</blockquote>
+        </div>
+      </section>
+
+      <section>
+        <span class="section-number">02</span>
+        <div>
+          <h2>Ro i maven. Ro i kroppen.</h2>
+          <p>Keto gav mig en bedre fornemmelse i kroppen. Min tidligere urolige tarm faldt til ro, og jeg oplevede også en mere generel ro. Den slags er svært at gøre op i et enkelt tal, men det er svært ikke at lægge mærke til, når maven holder op med at kommentere højlydt på dagens program.</p>
+          <p>Jeg har nu levet med keto i flere år. Det betyder ikke, at jeg mener, at alle skal spise på samme måde. Kroppe er forskellige, sygdomsforløb er forskellige, og det, der blev en god løsning for mig, er ikke automatisk den rigtige løsning for en anden.</p>
+        </div>
+      </section>
+
+      <section>
+        <span class="section-number">03</span>
+        <div>
+          <h2>Sådan skriver jeg på Ketoklar</h2>
+          <p>Når jeg skriver en artikel, blander jeg min egen erfaring med det, jeg lærer fra bøger og artikler om keto. Når emnet handler om kroppen, sygdom eller sikkerhed, undersøger jeg også de videnskabelige kilder og linker til dem, så du selv kan læse videre.</p>
+          <p>Jeg er ikke læge, klinisk diætist eller anden sundhedsfaglig person. Jeg prøver derfor ikke at stille diagnoser eller fortælle dig, hvordan din medicin skal håndteres. Min opgave er at gøre et kompliceret emne forståeligt, fortælle ærligt om mine erfaringer og være tydelig om, hvor grænsen går mellem personlig erfaring og forskning.</p>
+          <ul>
+            <li>Jeg angiver kilder, når artiklerne bygger på forskning.</li>
+            <li>Jeg lover ikke, at min personlige erfaring kan gentages af alle.</li>
+            <li>Jeg retter indholdet, hvis jeg opdager en fejl eller finder bedre dokumentation.</li>
+            <li>Jeg henviser til læge eller klinisk diætist, når individuel rådgivning er nødvendig.</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <aside class="author-contact" data-reveal>
+      <span>Ris, ros eller en rettelse?</span>
+      <h2>Min indbakke er mindre følsom end min gamle tarm.</h2>
+      <p>Hvis du har et spørgsmål, opdager en fejl eller bare vil dele en god ketohistorie, kan du skrive til mig.</p>
+      <a href="mailto:hej@ketoklar.dk">hej@ketoklar.dk <span aria-hidden="true">↗</span></a>
+    </aside>
+
+    <p class="author-disclaimer">Indholdet på Ketoklar er generel information og kan ikke erstatte individuel rådgivning, undersøgelse eller behandling hos læge eller klinisk diætist.</p>
+  </article>
+</Layout>
+
+<style>
+  .author-page { --copy-width: 47rem; }
+  .author-hero { display: grid; grid-template-columns: minmax(10rem, .38fr) minmax(0, 1fr); gap: clamp(2rem, 6vw, 5rem); align-items: center; padding: clamp(2rem, 6vw, 5rem); border-radius: var(--radius-lg); color: var(--cream); background: var(--forest); }
+  .author-hero__monogram { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; color: var(--ink); background: var(--lime); font-family: var(--font-display); font-size: clamp(3.5rem, 8vw, 7rem); font-style: italic; font-weight: 650; letter-spacing: -.08em; transform: rotate(-4deg); }
+  .author-kicker { color: var(--lime); font-size: .68rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+  .author-hero h1 { max-width: 15ch; margin-top: 1.1rem; font-family: var(--font-display); font-size: clamp(2.8rem, 6vw, 5.6rem); font-weight: 500; letter-spacing: -.06em; line-height: .9; }
+  .author-hero p { max-width: 39rem; margin-top: 1.6rem; color: rgba(255, 250, 240, .78); font-size: 1rem; line-height: 1.65; }
+  .author-copy { max-width: var(--copy-width); margin: clamp(4rem, 9vw, 7rem) auto 0; }
+  .author-copy section { display: grid; grid-template-columns: 3rem 1fr; gap: 1.5rem; padding: 3rem 0; border-top: 1px solid rgba(16, 35, 26, .2); }
+  .section-number { padding-top: .4rem; color: var(--tomato-dark); font-size: .68rem; font-weight: 700; }
+  .author-copy h2 { max-width: 18ch; font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 550; letter-spacing: -.045em; line-height: 1; }
+  .author-copy p { margin-top: 1.25rem; font-size: 1.03rem; line-height: 1.75; }
+  .author-copy blockquote { margin: 2rem 0; padding: 1.8rem 2rem; border-radius: var(--radius-md); color: var(--ink); background: var(--sky); font-family: var(--font-display); font-size: clamp(1.35rem, 3vw, 2rem); font-style: italic; line-height: 1.25; }
+  .author-copy ul { display: grid; gap: .75rem; margin: 1.5rem 0 0; padding-left: 1.2rem; list-style: disc; }
+  .author-copy li { padding-left: .3rem; line-height: 1.6; }
+  .author-copy li::marker { color: var(--tomato); }
+  .author-contact { max-width: 58rem; margin: clamp(4rem, 9vw, 7rem) auto 0; padding: clamp(2.2rem, 6vw, 4.5rem); border-radius: var(--radius-lg); color: var(--ink); background: var(--lime); }
+  .author-contact > span { font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .author-contact h2 { max-width: 17ch; margin-top: 1rem; font-family: var(--font-display); font-size: clamp(2.2rem, 5vw, 4.2rem); font-weight: 550; letter-spacing: -.055em; line-height: .94; }
+  .author-contact p { max-width: 38rem; margin-top: 1.25rem; line-height: 1.65; }
+  .author-contact a { display: inline-flex; gap: .7rem; margin-top: 1.5rem; padding-bottom: .3rem; border-bottom: 1px solid currentColor; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .author-disclaimer { max-width: var(--copy-width); margin: 2rem auto 0; color: var(--muted); font-size: .75rem; line-height: 1.6; }
+  @media (max-width: 720px) {
+    .author-hero { grid-template-columns: 1fr; }
+    .author-hero__monogram { width: 8rem; }
+    .author-copy section { grid-template-columns: 1fr; gap: .5rem; }
+  }
+</style>
+

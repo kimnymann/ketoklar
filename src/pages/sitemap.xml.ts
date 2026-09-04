@@ -35,6 +35,7 @@ export const GET: APIRoute = async () => {
     '/opskrifter?kategori=laekkerier',
     '/artikler',
     '/artikler/anekdoter',
+    '/om-kim-sax',
   ];
 
   const urls = [

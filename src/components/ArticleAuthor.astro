@@ -1,0 +1,41 @@
+<aside class="article-author" aria-label="Om artiklens forfatter">
+  <span class="article-author__initials" aria-hidden="true">KS</span>
+  <p>
+    <span>Skrevet af</span>
+    <a href="/om-kim-sax">Kim Sax</a>
+    <small>Grundlægger og redaktør på Ketoklar</small>
+  </p>
+</aside>
+
+<style>
+  .article-author {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    max-width: 48rem;
+    margin: 1.5rem auto 2.5rem;
+    padding: .85rem 1rem;
+    border-block: 1px solid rgba(16, 35, 26, .16);
+  }
+
+  .article-author__initials {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+    color: var(--cream);
+    background: var(--forest);
+    font-family: var(--font-display);
+    font-size: .88rem;
+    font-weight: 650;
+  }
+
+  .article-author p { line-height: 1.25; }
+  .article-author p > span { margin-right: .3rem; color: var(--muted); font-size: .72rem; }
+  .article-author a { font-family: var(--font-display); font-size: 1.05rem; font-weight: 650; text-decoration: underline; text-decoration-color: var(--tomato); text-underline-offset: 3px; }
+  .article-author a:hover { color: var(--tomato-dark); }
+  .article-author small { display: block; margin-top: .2rem; color: var(--muted); font-size: .68rem; }
+</style>
+

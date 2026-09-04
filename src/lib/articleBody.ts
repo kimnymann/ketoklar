@@ -5,6 +5,7 @@
 export type ArticleBlock =
   | { type: 'heading'; text: string }
   | { type: 'paragraph'; html: string }
+  | { type: 'list'; items: string[] }
   | { type: 'quote'; text: string }
   | { type: 'recipe'; slug: string }
   | { type: 'articleImage'; marker: string }
@@ -54,6 +55,14 @@ export function parseArticleBody(body: string): ArticleBlock[] {
     }
 
     const lines = trimmed.split('\n');
+    if (lines.length > 0 && lines.every((l) => l.trim().startsWith('- '))) {
+      blocks.push({
+        type: 'list',
+        items: lines.map((l) => renderInlineLinks(l.trim().slice(2).trim())),
+      });
+      continue;
+    }
+
     if (lines.length > 0 && lines.every((l) => l.trim().startsWith('> '))) {
       const quoteText = lines.map((l) => l.trim().slice(2).trim()).join(' ');
       blocks.push({ type: 'quote', text: quoteText });
