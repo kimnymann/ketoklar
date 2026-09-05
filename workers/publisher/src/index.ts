@@ -3,14 +3,22 @@ import { ensureRecipeImage, ensureArticleImage, ensureArticleBodyImages } from '
 
 export interface Env extends ImageEnv {
   DB: D1Database;
+  EMAIL?: SendEmail;
   PUBLISH_SECRET?: string;
 }
 
 const ARTICLES_PER_MONDAY = 1;
 const ANECDOTES_PER_THURSDAY = 1;
 const LOW_ARTICLE_QUEUE_THRESHOLD = 2;
+const RECIPE_READY_TARGET_PER_CATEGORY = 2;
+// Efter dagens udgivelse må én kategori naturligt være faldet fra to til én.
+const LOW_RECIPE_READY_QUEUE_THRESHOLD = RECIPE_READY_TARGET_PER_CATEGORY * 4 - 1;
 const RECIPE_CATEGORY_ROTATION = ['morgen', 'frokost', 'aften', 'laekkerier'] as const;
 const DAILY_IMAGE_PREP_CRON = '0 5 * * *';
+const DAILY_PUBLISH_CRON = '0 6 * * *';
+const DAILY_PUBLISH_WATCHDOG_CRON = '15 6 * * *';
+const ALERT_FROM = 'hej@ketoklar.dk';
+const ALERT_TO = 'ketoklar@saxgruppen.dk';
 
 type RecipeQueueItem = {
   id: number;
@@ -33,29 +41,49 @@ type ArticleQueueItem = {
 
 type ArticleTrack = 'article' | 'anecdote';
 
-async function categoryPriority(env: Env): Promise<RecipeQueueItem['category'][]> {
+type RecipeReadiness = {
+  category: RecipeQueueItem['category'];
+  queued: number;
+  ready: number;
+};
+
+async function categoryPriority(env: Env, includeLastPublished = true): Promise<RecipeQueueItem['category'][]> {
   const lastPublished = await env.DB
     .prepare(`SELECT category FROM recipes WHERE published_at IS NOT NULL ORDER BY published_at DESC, id DESC LIMIT 1`)
     .first<{ category: RecipeQueueItem['category'] }>();
   const lastIndex = lastPublished ? RECIPE_CATEGORY_ROTATION.indexOf(lastPublished.category) : -1;
-  return RECIPE_CATEGORY_ROTATION.map(
+  const priority = RECIPE_CATEGORY_ROTATION.map(
     (_, offset) => RECIPE_CATEGORY_ROTATION[(lastIndex + 1 + offset) % RECIPE_CATEGORY_ROTATION.length]
   );
+  return lastPublished && !includeLastPublished
+    ? priority.filter((category) => category !== lastPublished.category)
+    : priority;
 }
 
-async function nextRecipeToPublish(env: Env): Promise<RecipeQueueItem | null> {
-  for (const category of await categoryPriority(env)) {
-    const recipe = await env.DB
-      .prepare(
-        `SELECT id, slug, title, category, ingredients_json, instructions FROM recipes
-         WHERE status = 'godkendt' AND published_at IS NULL AND category = ?
-         ORDER BY created_at ASC, id ASC LIMIT 1`
-      )
-      .bind(category)
-      .first<RecipeQueueItem>();
-    if (recipe) return recipe;
-  }
-  return null;
+async function recipeQueueReadiness(env: Env): Promise<RecipeReadiness[]> {
+  const { results } = await env.DB
+    .prepare(
+      `SELECT category,
+              COUNT(*) AS queued,
+              SUM(CASE WHEN image_status = 'klar' AND image_url IS NOT NULL
+                         AND COALESCE((
+                           SELECT status FROM image_reviews ir
+                           WHERE ir.entity_type = 'recipe' AND ir.entity_id = recipes.id AND ir.marker = ''
+                           ORDER BY ir.id DESC LIMIT 1
+                         ), '') = 'godkendt'
+                       THEN 1 ELSE 0 END) AS ready
+       FROM recipes
+       WHERE status = 'godkendt' AND published_at IS NULL
+       GROUP BY category`
+    )
+    .all<{ category: RecipeQueueItem['category']; queued: number; ready: number }>();
+
+  const byCategory = new Map(results.map((row) => [row.category, row]));
+  return RECIPE_CATEGORY_ROTATION.map((category) => ({
+    category,
+    queued: byCategory.get(category)?.queued ?? 0,
+    ready: byCategory.get(category)?.ready ?? 0,
+  }));
 }
 
 async function recipesToPrepare(env: Env, limit: number): Promise<RecipeQueueItem[]> {
@@ -63,30 +91,29 @@ async function recipesToPrepare(env: Env, limit: number): Promise<RecipeQueueIte
     .prepare(
       `SELECT id, slug, title, category, ingredients_json, instructions, created_at FROM recipes r
        WHERE status = 'godkendt' AND published_at IS NULL
-         AND NOT EXISTS (
-           SELECT 1 FROM image_reviews ir
-           WHERE ir.entity_type = 'recipe' AND ir.entity_id = r.id AND ir.status = 'godkendt'
+         AND COALESCE(image_status, '') != 'fejlet'
+         AND NOT (
+           image_status = 'klar' AND image_url IS NOT NULL
+           AND COALESCE((
+             SELECT status FROM image_reviews ir
+             WHERE ir.entity_type = 'recipe' AND ir.entity_id = r.id AND ir.marker = ''
+             ORDER BY ir.id DESC LIMIT 1
+           ), '') = 'godkendt'
          )
        ORDER BY created_at ASC, id ASC LIMIT 100`
     )
     .all<RecipeQueueItem>();
 
+  const readiness = await recipeQueueReadiness(env);
   const priority = await categoryPriority(env);
   const groups = new Map(priority.map((category) => [category, results.filter((recipe) => recipe.category === category)]));
   const selected: RecipeQueueItem[] = [];
-  while (selected.length < limit) {
-    let found = false;
-    for (const category of priority) {
-      const next = groups.get(category)?.shift();
-      if (next) {
-        selected.push(next);
-        found = true;
-        if (selected.length === limit) break;
-      }
-    }
-    if (!found) break;
+  for (const category of priority) {
+    const currentReady = readiness.find((row) => row.category === category)?.ready ?? 0;
+    const deficit = Math.max(0, RECIPE_READY_TARGET_PER_CATEGORY - currentReady);
+    selected.push(...(groups.get(category) ?? []).slice(0, deficit));
   }
-  return selected;
+  return selected.slice(0, limit);
 }
 
 async function prepareImages(
@@ -180,7 +207,11 @@ async function prepareImages(
 
   const summary = {
     timestamp: new Date().toISOString(),
-    recipes: { processed: recipeOutcomes.length, outcomes: recipeOutcomes },
+    recipes: {
+      processed: recipeOutcomes.length,
+      outcomes: recipeOutcomes,
+      readiness: await recipeQueueReadiness(env),
+    },
     articles: { processed: articleOutcomes.length, outcomes: articleOutcomes },
   };
   console.log(JSON.stringify({ imagePreparation: summary }));
@@ -213,26 +244,43 @@ async function publishRecipes(env: Env) {
     return { published: [] as string[], warning: 'Dagens opskrift er allerede udgivet.', imageWarnings: [] as string[] };
   }
 
-  const recipe = await nextRecipeToPublish(env);
-  if (!recipe) {
-    return { published: [] as string[], warning: 'Opskriftskøen er tom, ingen nye opskrifter at udgive.', imageWarnings: [] as string[] };
+  const priority = await categoryPriority(env, false);
+  for (const category of priority) {
+    const recipe = await env.DB
+      .prepare(
+        `SELECT id, slug, title, category, ingredients_json, instructions FROM recipes r
+         WHERE status = 'godkendt' AND published_at IS NULL AND category = ?
+           AND image_status = 'klar' AND image_url IS NOT NULL
+           AND COALESCE((
+             SELECT status FROM image_reviews ir
+             WHERE ir.entity_type = 'recipe' AND ir.entity_id = r.id AND ir.marker = ''
+             ORDER BY ir.id DESC LIMIT 1
+           ), '') = 'godkendt'
+         ORDER BY created_at ASC, id ASC LIMIT 1`
+      )
+      .bind(category)
+      .first<RecipeQueueItem>();
+    if (!recipe) continue;
+
+    const updated = await env.DB
+      .prepare(`UPDATE recipes SET published_at = datetime('now') WHERE id = ? AND published_at IS NULL`)
+      .bind(recipe.id)
+      .run();
+    if ((updated.meta.changes ?? 0) > 0) {
+      return { published: [recipe.slug], category: recipe.category, warning: null, imageWarnings: [] as string[] };
+    }
   }
 
-  const imageResult = await ensureRecipeImage(env, recipe);
-  if (!imageResult.ok) {
-    return {
-      published: [] as string[],
-      category: recipe.category,
-      warning: `Opskriften ${recipe.slug} blev ikke udgivet, fordi billedet ikke bestod kvalitetskontrollen.`,
-      imageWarnings: [imageResult.error || 'Ukendt billedfejl.'],
-    };
-  }
-
-  await env.DB
-    .prepare(`UPDATE recipes SET published_at = datetime('now') WHERE id = ? AND published_at IS NULL`)
-    .bind(recipe.id)
-    .run();
-  return { published: [recipe.slug], category: recipe.category, warning: null, imageWarnings: [] as string[] };
+  const readiness = await recipeQueueReadiness(env);
+  const queued = readiness.reduce((sum, row) => sum + row.queued, 0);
+  const ready = readiness.reduce((sum, row) => sum + row.ready, 0);
+  return {
+    published: [] as string[],
+    warning: queued === 0
+      ? 'Opskriftskøen er tom, ingen nye opskrifter at udgive.'
+      : `Ingen af de ${ready} billedgodkendte opskrifter kunne bruges uden at gentage gårsdagens kategori.`,
+    imageWarnings: [] as string[],
+  };
 }
 
 function articleTrackDetails(track: ArticleTrack) {
@@ -337,6 +385,74 @@ async function runPublishing(env: Env) {
   return summary;
 }
 
+async function sendPublisherAlert(env: Env, subject: string, text: string) {
+  if (!env.EMAIL) {
+    console.error(JSON.stringify({ publisherAlert: { sent: false, error: 'EMAIL-binding mangler.', subject } }));
+    return { sent: false, error: 'EMAIL-binding mangler.' };
+  }
+  try {
+    const result = await env.EMAIL.send({
+      from: ALERT_FROM,
+      to: ALERT_TO,
+      replyTo: ALERT_FROM,
+      subject,
+      text,
+    });
+    console.log(JSON.stringify({ publisherAlert: { sent: true, subject, messageId: result.messageId } }));
+    return { sent: true, messageId: result.messageId };
+  } catch (error) {
+    console.error(JSON.stringify({ publisherAlert: { sent: false, subject, error: String(error) } }));
+    return { sent: false, error: String(error) };
+  }
+}
+
+async function runRecipeWatchdog(env: Env) {
+  // Idempotensen i publishRecipes gør dette sikkert: er dagens opskrift allerede
+  // ude, foretages ingen ny udgivelse. Ellers bruges en godkendt reserve.
+  const publication = await publishRecipes(env);
+  const publishedToday = await env.DB
+    .prepare(`SELECT COUNT(*) AS count FROM recipes WHERE published_at >= date('now')`)
+    .first<{ count: number }>();
+  const readiness = await recipeQueueReadiness(env);
+  const readyTotal = readiness.reduce((sum, row) => sum + row.ready, 0);
+  const emptyReadyCategories = readiness.filter((row) => row.queued > 0 && row.ready === 0);
+  const issues: string[] = [];
+
+  if ((publishedToday?.count ?? 0) === 0) {
+    issues.push(`Ingen opskrift blev udgivet i dag. ${publication.warning ?? ''}`.trim());
+  }
+  if (readyTotal < LOW_RECIPE_READY_QUEUE_THRESHOLD) {
+    issues.push(`Den udgivelsesklare kø har kun ${readyTotal} opskrifter tilbage.`);
+  }
+  if (emptyReadyCategories.length > 0) {
+    issues.push(`Ingen billedgodkendt reserve i: ${emptyReadyCategories.map((row) => row.category).join(', ')}.`);
+  }
+
+  const summary = {
+    timestamp: new Date().toISOString(),
+    publication,
+    readiness,
+    issues,
+  };
+  if (issues.length > 0) {
+    const queueLines = readiness.map((row) => `- ${row.category}: ${row.ready} klar / ${row.queued} i kø`);
+    await sendPublisherAlert(
+      env,
+      `[Ketoklar] Opskriftsmotoren kræver opmærksomhed ${new Date().toISOString().slice(0, 10)}`,
+      [
+        'Ketoklars automatiske opskriftskontrol har fundet følgende:',
+        '',
+        ...issues,
+        '',
+        'Status for køen:',
+        ...queueLines,
+      ].join('\n')
+    );
+  }
+  console.log(JSON.stringify({ recipeWatchdog: summary }));
+  return summary;
+}
+
 function isAuthorized(request: Request, env: Env, url: URL): boolean {
   const secret = request.headers.get('x-publish-secret') ?? url.searchParams.get('secret');
   return Boolean(env.PUBLISH_SECRET && secret === env.PUBLISH_SECRET);
@@ -345,14 +461,20 @@ function isAuthorized(request: Request, env: Env, url: URL): boolean {
 export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     if (event.cron === DAILY_IMAGE_PREP_CRON) {
-      // Fire kø-opskrifter giver mindst én fra hver kategori. To ældre billeder
-      // opgraderes dagligt, indtil hele det eksisterende arkiv er kvalitetstjekket.
+      // Hold op til to billedgodkendte reserver klar i hver kategori. To ældre
+      // billeder opgraderes dagligt, indtil hele arkivet er kvalitetstjekket.
       ctx.waitUntil(
-        prepareImages(env, { recipeLimit: 4, articleLimit: 1, legacyRecipeLimit: 2, legacyArticleLimit: 1 })
+        prepareImages(env, { recipeLimit: 8, articleLimit: 1, legacyRecipeLimit: 2, legacyArticleLimit: 1 })
       );
       return;
     }
-    ctx.waitUntil(runPublishing(env));
+    if (event.cron === DAILY_PUBLISH_CRON) {
+      ctx.waitUntil(runPublishing(env));
+      return;
+    }
+    if (event.cron === DAILY_PUBLISH_WATCHDOG_CRON) {
+      ctx.waitUntil(runRecipeWatchdog(env));
+    }
   },
 
   async fetch(request: Request, env: Env) {

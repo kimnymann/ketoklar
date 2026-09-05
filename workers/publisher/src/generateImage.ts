@@ -3,7 +3,7 @@ import { IMAGE_REVIEW_MODEL, reviewGeneratedImage, type ImageReview, type Review
 import type { ImageEnv } from './testImages';
 
 export const PRODUCTION_IMAGE_MODEL = '@cf/leonardo/lucid-origin';
-const MAX_GENERATION_ATTEMPTS = 2;
+const MAX_GENERATION_ATTEMPTS = 3;
 
 type RecipeRow = RecipeForPrompt & { id: number; slug: string };
 type ArticleRow = ArticleForPrompt & { id: number; slug: string };
@@ -130,7 +130,9 @@ async function reviewedGeneration(
   const runId = crypto.randomUUID();
 
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
-    const seed = `${options.row.slug}-quality-v2-${attempt}`;
+    // Run-id'et sikrer, at en senere genkørsel ikke producerer præcis de samme
+    // afviste billeder igen på grund af et fast seed.
+    const seed = `${options.row.slug}-quality-v3-${runId}-${attempt}`;
     const generated = await runImageGeneration(env, buildFullPrompt(attemptPrompt, seed), seed);
     if (!generated.ok) {
       lastError = generated.error;
@@ -248,7 +250,7 @@ export async function ensureArticleBodyImages(
     const runId = crypto.randomUUID();
 
     for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
-      const seed = `${article.slug}-${marker}-quality-v2-${attempt}`;
+      const seed = `${article.slug}-${marker}-quality-v3-${runId}-${attempt}`;
       const generated = await runImageGeneration(env, buildFullPrompt(attemptPrompt, seed), seed);
       if (!generated.ok) {
         lastError = generated.error;
