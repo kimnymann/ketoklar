@@ -390,6 +390,31 @@ async function runPublishing(env: Env) {
     articles: articleResult,
     anecdotes: anecdoteResult,
   };
+  const editorialTrack = weekday === 1 ? articleResult : weekday === 4 ? anecdoteResult : null;
+  if (editorialTrack) {
+    const label = weekday === 1 ? 'artikel' : 'anekdote';
+    const issues: string[] = [];
+    if (editorialTrack.published.length === 0 && !editorialTrack.warning?.includes('allerede udgivet')) {
+      issues.push(`Dagens ${label} blev ikke udgivet.`);
+    }
+    if (editorialTrack.warning && !editorialTrack.warning.includes('allerede udgivet')) {
+      issues.push(editorialTrack.warning);
+    }
+    issues.push(...editorialTrack.imageWarnings);
+    if (issues.length > 0) {
+      await sendPublisherAlert(
+        env,
+        `[Ketoklar] ${weekday === 1 ? 'Artikel' : 'Anekdote'} kræver opmærksomhed ${new Date().toISOString().slice(0, 10)}`,
+        [
+          `Ketoklars planlagte ${label}kørsel har fundet følgende:`,
+          '',
+          ...issues,
+          '',
+          `Udgivelser tilbage i køen: ${editorialTrack.queueRemaining ?? 'ukendt'}.`,
+        ].join('\n')
+      );
+    }
+  }
   console.log(JSON.stringify(summary));
   return summary;
 }
