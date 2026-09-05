@@ -4,6 +4,9 @@ Denne fil beskriver det niveau, alle opskrifter på Ketoklar skal leve op til.
 Gælder både eksisterende og alle fremtidige batches, uanset hvem eller hvad
 der skriver dem.
 
+De redaktionelle SEO-krav findes i `docs/content-seo-standard.md` og skal
+kontrolleres sammen med kravene her, før en batch godkendes.
+
 ## Fremgangsmåde
 
 Skriv ALDRIG korte, generiske trin som "Steg kyllingen" eller "Bag i ovnen".
@@ -50,8 +53,8 @@ Håndteres automatisk af publisher-workeren, se
 - Køens billeder klargøres dagligt kl. 05:00 UTC, før udgivelsen kl. 06:00 UTC.
 - En separat visionmodel kontrollerer rettens type, hovedingredienser og eventuelle
   opdigtede madvarer. Der kræves mindst 75/100.
-- Et afvist billede genereres automatisk én gang mere med kontrollens rettelse.
-- Hvis begge forsøg afvises, sættes billedet til `fejlet`, og opskriften udgives
+- Et afvist billede genereres automatisk op til to gange mere med kontrollens rettelse.
+- Hvis alle tre forsøg afvises, sættes billedet til `fejlet`, og opskriften udgives
   ikke automatisk. Kandidater og begrundelser gemmes til kontrol.
 - Efter en ny batch kan den beskyttede `POST /prepare-images` kaldes for at
   klargøre billederne med det samme; ellers samler den daglige kørsel dem op.

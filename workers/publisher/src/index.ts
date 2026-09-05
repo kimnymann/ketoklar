@@ -366,8 +366,17 @@ async function publishArticleTrack(env: Env, count: number, track: ArticleTrack)
 }
 
 async function runPublishing(env: Env) {
-  const recipeResult = await publishRecipes(env);
   const weekday = new Date().getUTCDay();
+  const isEditorialDay = weekday === 1 || weekday === 4;
+  const recipeResult = isEditorialDay
+    ? {
+        published: [] as string[],
+        warning: weekday === 1
+          ? 'Opskriften springes over, fordi mandag er artikeldag.'
+          : 'Opskriften springes over, fordi torsdag er anekdotedag.',
+        imageWarnings: [] as string[],
+      }
+    : await publishRecipes(env);
   const idleTrack = { published: [] as string[], queueRemaining: null, warning: null, imageWarnings: [] as string[] };
   const articleResult = weekday === 1
     ? await publishArticleTrack(env, ARTICLES_PER_MONDAY, 'article')
@@ -409,7 +418,17 @@ async function sendPublisherAlert(env: Env, subject: string, text: string) {
 async function runRecipeWatchdog(env: Env) {
   // Idempotensen i publishRecipes gør dette sikkert: er dagens opskrift allerede
   // ude, foretages ingen ny udgivelse. Ellers bruges en godkendt reserve.
-  const publication = await publishRecipes(env);
+  const weekday = new Date().getUTCDay();
+  const isEditorialDay = weekday === 1 || weekday === 4;
+  const publication = isEditorialDay
+    ? {
+        published: [] as string[],
+        warning: weekday === 1
+          ? 'Ingen opskrift planlagt på artikeldagen.'
+          : 'Ingen opskrift planlagt på anekdotedagen.',
+        imageWarnings: [] as string[],
+      }
+    : await publishRecipes(env);
   const publishedToday = await env.DB
     .prepare(`SELECT COUNT(*) AS count FROM recipes WHERE published_at >= date('now')`)
     .first<{ count: number }>();
@@ -418,7 +437,7 @@ async function runRecipeWatchdog(env: Env) {
   const emptyReadyCategories = readiness.filter((row) => row.queued > 0 && row.ready === 0);
   const issues: string[] = [];
 
-  if ((publishedToday?.count ?? 0) === 0) {
+  if (!isEditorialDay && (publishedToday?.count ?? 0) === 0) {
     issues.push(`Ingen opskrift blev udgivet i dag. ${publication.warning ?? ''}`.trim());
   }
   if (readyTotal < LOW_RECIPE_READY_QUEUE_THRESHOLD) {
