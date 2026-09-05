@@ -53,7 +53,12 @@ const jsonLd = JSON.stringify({
   ],
 }).replace(/</g, '\\u003c');
 
-const today = new Intl.DateTimeFormat('da-DK', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+const today = new Intl.DateTimeFormat('da-DK', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'Europe/Copenhagen',
+}).format(new Date());
 ---
 
 <!doctype html>
