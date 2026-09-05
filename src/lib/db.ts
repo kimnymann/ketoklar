@@ -29,6 +29,7 @@ export type Article = {
   locked: number;
   status: string;
   published_at: string | null;
+  updated_at?: string | null;
 };
 
 export const CATEGORY_LABELS: Record<Recipe['category'], string> = {

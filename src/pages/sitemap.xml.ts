@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { absoluteUrl, toIsoDateTime } from '../lib/seo';
 
-type SitemapRow = { slug: string; published_at: string | null };
+type SitemapRow = { slug: string; published_at: string | null; updated_at?: string | null };
 
 const escapeXml = (value: string) => value
   .replace(/&/g, '&amp;')
@@ -20,7 +20,7 @@ export const GET: APIRoute = async () => {
       ORDER BY published_at DESC
     `).all<SitemapRow>(),
     db.prepare(`
-      SELECT slug, published_at FROM articles
+      SELECT slug, published_at, updated_at FROM articles
       WHERE status = 'godkendt' AND published_at IS NOT NULL AND published_at <= datetime('now')
       ORDER BY published_at DESC
     `).all<SitemapRow>(),
@@ -46,7 +46,7 @@ export const GET: APIRoute = async () => {
     })),
     ...articles.map((article) => ({
       loc: absoluteUrl(`/artikler/${article.slug}`),
-      lastmod: toIsoDateTime(article.published_at),
+      lastmod: toIsoDateTime(article.updated_at ?? article.published_at),
     })),
   ];
 

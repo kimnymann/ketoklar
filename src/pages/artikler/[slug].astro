@@ -43,6 +43,9 @@ let articleImageCount = 0;
 const isSubscriber = false;
 const isLocked = article.locked === 1 && !isSubscriber;
 const blocks = isLocked ? [] : parseArticleBody(article.body);
+const contents = blocks.flatMap((block, index) => block.type === 'heading'
+  ? [{ text: block.text, id: `afsnit-${index}`, index }] : []);
+const contentsStart = contents[0]?.index;
 
 const heroColors: Record<Article['category'], string> = {
   videnskab: 'var(--sage)',
@@ -70,6 +73,7 @@ const articleStructuredData = {
   description: articleDescription,
   ...(article.image_url ? { image: [absoluteUrl(article.image_url)] } : {}),
   ...(toIsoDateTime(article.published_at) ? { datePublished: toIsoDateTime(article.published_at) } : {}),
+  ...(toIsoDateTime(article.updated_at ?? null) ? { dateModified: toIsoDateTime(article.updated_at ?? null) } : {}),
   mainEntityOfPage: articleUrl,
   inLanguage: 'da-DK',
   publisher: { '@id': 'https://ketoklar.dk/#organization' },
@@ -132,6 +136,11 @@ const articleStructuredData = {
   )}
 
   <ArticleAuthor />
+  {article.updated_at && (
+    <p class="max-w-3xl mx-auto mb-6 text-sm text-[var(--sage)]">
+      Senest opdateret <time datetime={toIsoDateTime(article.updated_at)}>{formatPublishedDate(article.updated_at)}</time>
+    </p>
+  )}
 
   {isLocked ? (
     <div class="bg-[var(--paper-light)] border border-[var(--ink)]/15 rounded-2xl p-10 text-center">
@@ -143,9 +152,19 @@ const articleStructuredData = {
     </div>
   ) : (
     <div class="max-w-3xl mx-auto leading-relaxed space-y-5" style="color: var(--ink);">
-      {blocks.map((block) => {
+      {blocks.map((block, index) => {
         if (block.type === 'heading') {
-          return <h2 class="font-display text-xl font-600 pt-3" style="color: var(--ink);">{block.text}</h2>;
+          return <>
+            {index === contentsStart && contents.length >= 3 && (
+              <nav aria-label="Indholdsfortegnelse" class="article-contents">
+                <p class="font-semibold mb-3">I denne artikel</p>
+                <ul class="space-y-2">
+                  {contents.map((entry) => <li><a class="ketoklar-inline-link" href={`#${entry.id}`}>{entry.text}</a></li>)}
+                </ul>
+              </nav>
+            )}
+            <h2 id={`afsnit-${index}`} tabindex="-1" class="font-display text-xl font-600 pt-3 scroll-mt-6" style="color: var(--ink);">{block.text}</h2>
+          </>;
         }
         if (block.type === 'quote') {
           return (
@@ -252,6 +271,7 @@ const articleStructuredData = {
 </Layout>
 
 <style>
+  .article-contents { padding: 1.5rem; border: 1px solid rgba(16,35,26,.18); border-radius: var(--radius-md); background: var(--card); }
   .foodlist-widget input { display: none; }
   .foodlist-widget .foodlist-panel { display: none; }
   .foodlist-widget .foodlist-tab-label { color: var(--ink); }

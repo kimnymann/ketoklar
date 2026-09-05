@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS articles (
   locked INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'kladde' CHECK (status IN ('kladde','til_godkendelse','godkendt')),
   published_at TEXT,
+  updated_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
