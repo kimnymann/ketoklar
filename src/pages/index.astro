@@ -87,7 +87,11 @@ const featuredRecipes = departmentEntries.flatMap((entry) => entry.recipes.slice
     <section class="recipe-feature site-frame">
       <SectionHeading eyebrow="Spis nu" title="Fire måltider. Nul kedelige valg." href="/opskrifter" linkLabel="Alle opskrifter" />
       <div class="recipe-feature__grid">
-        {featuredRecipes.map((recipe, index) => <RecipeCard recipe={recipe} index={index} />)}
+        {featuredRecipes.map((recipe, index) => (
+          <div class="recipe-feature__item">
+            <RecipeCard recipe={recipe} index={index} />
+          </div>
+        ))}
       </div>
     </section>
   )}
@@ -173,7 +177,7 @@ const featuredRecipes = departmentEntries.flatMap((entry) => entry.recipes.slice
   @keyframes ticker { to { transform: translateX(-50%); } }
   .recipe-feature, .journal, .departments { padding-top: clamp(6rem, 11vw, 10rem); }
   .recipe-feature__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
-  .recipe-feature__grid > :nth-child(even) { margin-top: 3.5rem; }
+  .recipe-feature__item:nth-child(even) { margin-top: 3.5rem; }
   .story-break { position: relative; margin-top: clamp(6rem, 11vw, 10rem); overflow: hidden; color: var(--ink); background: var(--sky); }
   .story-break__inner { position: relative; display: grid; grid-template-columns: 12rem minmax(0, 1fr) 13rem; gap: clamp(2rem, 5vw, 6rem); align-items: center; min-height: 34rem; padding-block: clamp(4rem, 8vw, 7rem); }
   .story-break__label span { display: inline-block; margin-bottom: 1rem; padding: .5rem .7rem; border-radius: 999px; color: var(--cream); background: var(--tomato); font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
@@ -212,7 +216,7 @@ const featuredRecipes = departmentEntries.flatMap((entry) => entry.recipes.slice
     .hero__copy { min-height: 29rem; }
     .hero h1 { max-width: 14ch; }
     .recipe-feature__grid { grid-template-columns: repeat(2, 1fr); gap: 2.5rem 1.25rem; }
-    .recipe-feature__grid > :nth-child(even) { margin-top: 0; }
+    .recipe-feature__item:nth-child(even) { margin-top: 0; }
     .story-break__inner { grid-template-columns: 8rem 1fr; }
     .story-break__shape { display: none; }
     .journal__grid { grid-template-columns: 1fr 1fr; }
@@ -235,7 +239,7 @@ const featuredRecipes = departmentEntries.flatMap((entry) => entry.recipes.slice
     .mobile-onboarding > a { display: grid; place-items: center; width: 2.35rem; height: 2.35rem; border-radius: 50%; color: var(--cream); background: var(--ink); font-size: 1rem; }
     .recipe-feature__grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; margin-right: -1rem; padding-right: 1rem; scrollbar-width: none; }
     .recipe-feature__grid::-webkit-scrollbar { display: none; }
-    .recipe-feature__grid > * { min-width: 78vw; scroll-snap-align: start; }
+    .recipe-feature__item { flex: 0 0 min(78vw, 22rem); min-width: 0; scroll-snap-align: start; }
     .story-break__inner { grid-template-columns: 1fr; min-height: 37rem; align-content: center; }
     .story-break__label { display: flex; justify-content: space-between; align-items: start; }
     .story-break__mark { left: -.7rem; }
