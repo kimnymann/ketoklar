@@ -69,9 +69,14 @@ export async function reviewGeneratedImage(
     targetFacts(target),
     isRecipe
       ? 'Approve only when the type of dish and its primary visible components match. Reject obvious invented edible items anywhere in the image, including side dishes and background food, a wrong protein, a wrong dish form, or a garnish that changes what the recipe appears to contain. Do not reject because melted, blended or minor seasoning ingredients are not individually visible.'
-      : 'Approve only when the image is clearly relevant to the requested article concept. Reject generic or contradictory imagery and visible text.',
-    'Scoring rubric: 90-100 is an accurate match; 75-89 has the correct dish and ingredients with only minor cosmetic variation; 40-74 has a missing or invented key food or an unclear dish form; 0-39 is the wrong dish.',
-    `Minor differences in browning, chopping, placement or styling must not push an otherwise correct image below ${IMAGE_REVIEW_MIN_SCORE}. approved must be true at ${IMAGE_REVIEW_MIN_SCORE} or higher and false below it.`,
+      : 'Judge relevance to the intended visual concept, believable objects, composition and editorial quality. A symbolic still life may illustrate one aspect of the article; it need not explain every claim or method. Food is not required. Reject unrelated imagery, major visual defects, misleading medical results and visible lettering. Plain clock ticks are allowed. Do not infer carbohydrate quantities, recipes or nutritional suitability from appearance alone; the mere presence of tomatoes or berries is not grounds for rejection.',
+    isRecipe
+      ? 'Scoring rubric: 90-100 is an accurate match; 75-89 has the correct dish and ingredients with only minor cosmetic variation; 40-74 has a missing or invented key food or an unclear dish form; 0-39 is the wrong dish.'
+      : 'Scoring rubric: 90-100 clearly conveys the intended editorial concept with convincing visual quality; 75-89 is relevant and usable with minor cosmetic imperfections; 40-74 has a weak connection or distracting visual defects; 0-39 is unrelated, contradictory or seriously misleading.',
+    isRecipe
+      ? `Minor differences in browning, chopping, placement or styling must not push an otherwise correct image below ${IMAGE_REVIEW_MIN_SCORE}.`
+      : `Minor styling differences must not push an otherwise relevant, credible image below ${IMAGE_REVIEW_MIN_SCORE}.`,
+    `approved must be true at ${IMAGE_REVIEW_MIN_SCORE} or higher and false below it.`,
     'Return JSON only with: approved, score, reason, observed_dish, retry_instruction. Keep the reason and retry instruction concise.',
   ].join('\n\n');
 

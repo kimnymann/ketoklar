@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS image_reviews (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Anonyme brugervurderinger. voter_hash kommer fra en tilfældig HttpOnly-cookie;
+-- Pseudonyme brugervurderinger. voter_hash kommer fra en tilfældig HttpOnly-cookie;
 -- IP-adresser gemmes ikke. En browser kan kun have én aktiv vurdering pr. opskrift.
 CREATE TABLE IF NOT EXISTS recipe_ratings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -110,3 +110,11 @@ CREATE INDEX IF NOT EXISTS idx_articles_category ON articles(category);
 CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status);
 CREATE INDEX IF NOT EXISTS idx_image_reviews_entity ON image_reviews(entity_type, entity_id, marker, id DESC);
 CREATE INDEX IF NOT EXISTS idx_recipe_ratings_recipe ON recipe_ratings(recipe_id);
+
+-- Only per-recipe totals remain after the retention job removes individual rows.
+CREATE TABLE IF NOT EXISTS recipe_rating_totals (
+  recipe_id INTEGER PRIMARY KEY REFERENCES recipes(id) ON DELETE CASCADE,
+  rating_total INTEGER NOT NULL CHECK (rating_total >= rating_count AND rating_total <= 5 * rating_count),
+  rating_count INTEGER NOT NULL CHECK (rating_count > 0)
+);
+CREATE INDEX IF NOT EXISTS idx_recipe_ratings_created ON recipe_ratings(created_at);

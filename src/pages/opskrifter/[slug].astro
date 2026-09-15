@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import RecipeRating from '../../components/RecipeRating.astro';
+import { RATING_SUMMARY_SQL } from '../../lib/ratingRetention';
 import type { Recipe, Article } from '../../lib/db';
 import { CATEGORY_LABELS, formatPublishedDate } from '../../lib/db';
 import { groupIngredientsByCategory, splitInstructionsIntoSteps } from '../../lib/ingredientCategory';
@@ -38,10 +39,7 @@ const isLocked = recipe.locked === 1 && !isSubscriber;
 
 let ratingSummary = { average: 0, count: 0 };
 try {
-  const summary = await db.prepare(`
-    SELECT COALESCE(ROUND(AVG(rating), 1), 0) AS average, COUNT(*) AS count
-    FROM recipe_ratings WHERE recipe_id = ?
-  `).bind(recipe.id).first<{ average: number; count: number }>();
+  const summary = await db.prepare(RATING_SUMMARY_SQL).bind(recipe.id).first<{ average: number; count: number }>();
   ratingSummary = {
     average: Number(summary?.average ?? 0),
     count: Number(summary?.count ?? 0),

@@ -26,14 +26,13 @@ const summary = count === 0 ? 'Ingen vurderinger endnu' : `${average.toFixed(1).
     <div class="recipe-rating__summary" data-rating-summary>{summary}</div>
     <div class="recipe-rating__turnstile" data-rating-turnstile></div>
     <p class="recipe-rating__status" data-rating-status aria-live="polite"></p>
-    <p class="recipe-rating__privacy">Ketoklar gemmer ikke din IP-adresse sammen med vurderingen.</p>
+    <p class="recipe-rating__privacy">Når du vælger stjerner, aktiveres Cloudflares sikkerhedstjek, og en cookie husker din vurdering i op til ét år. Vi gemmer ikke din IP-adresse sammen med vurderingen. <a href="/privatliv">Læs om persondata</a> · <a href="/cookies">Cookies</a>.</p>
   </div>
 </section>
 
-<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script is:inline>
   (() => {
-    const root = document.currentScript.previousElementSibling.previousElementSibling;
+    const root = document.currentScript.previousElementSibling;
     if (!(root instanceof HTMLElement)) return;
 
     const slug = root.dataset.ratingWidget;
@@ -92,6 +91,14 @@ const summary = count === 0 ? 'Ingen vurderinger endnu' : `${average.toFixed(1).
     };
 
     const waitForTurnstile = async () => {
+      if (!document.querySelector('script[data-rating-security]')) {
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        script.async = true;
+        script.dataset.ratingSecurity = '';
+        script.addEventListener('error', () => script.remove());
+        document.head.appendChild(script);
+      }
       for (let attempt = 0; attempt < 50; attempt += 1) {
         if (window.turnstile) return window.turnstile;
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -168,6 +175,7 @@ const summary = count === 0 ? 'Ingen vurderinger endnu' : `${average.toFixed(1).
   .recipe-rating__turnstile { display: flex; justify-content: center; min-height: 1px; margin-top: .5rem; }
   .recipe-rating__status { min-height: 1.25rem; margin-top: .35rem; color: var(--sage); font-size: .72rem; }
   .recipe-rating__privacy { max-width: 19rem; margin: .25rem auto 0; color: color-mix(in srgb, var(--sage) 78%, transparent); font-size: .62rem; line-height: 1.35; }
+  .recipe-rating__privacy a { text-decoration: underline; }
 
   @media (max-width: 700px) {
     .recipe-rating { grid-template-columns: 1fr; gap: 1.5rem; text-align: center; }

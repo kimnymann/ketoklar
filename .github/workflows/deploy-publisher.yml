@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'workers/publisher/**'
+      - 'src/lib/ratingRetention.ts'
       - '.github/workflows/deploy-publisher.yml'
   workflow_dispatch: {}
 

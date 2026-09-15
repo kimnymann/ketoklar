@@ -83,6 +83,9 @@ const minutes = Math.max(1, Math.ceil(article.body.trim().split(/\s+/).length / 
             </a>
           );
         }
+        if (block.type === 'staticImage') {
+          return <figure><img src={block.src} alt={block.alt} class="w-full h-auto" loading="lazy" /></figure>;
+        }
         if (block.type === 'articleImage') {
           const image = imagesByMarker.get(block.marker);
           if (!image?.image_url) return null;

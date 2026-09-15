@@ -136,7 +136,7 @@ async function reviewedGeneration(
     // Run-id'et sikrer, at en senere genkørsel ikke producerer præcis de samme
     // afviste billeder igen på grund af et fast seed.
     const seed = `${options.row.slug}-quality-v3-${runId}-${attempt}`;
-    const generated = await runImageGeneration(env, buildFullPrompt(attemptPrompt, seed), seed);
+    const generated = await runImageGeneration(env, buildFullPrompt(attemptPrompt, seed, options.entityType), seed);
     options.signal?.throwIfAborted();
     if (!generated.ok) {
       lastError = generated.error;
@@ -259,7 +259,7 @@ export async function ensureArticleBodyImages(
 
     for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
       const seed = `${article.slug}-${marker}-quality-v3-${runId}-${attempt}`;
-      const generated = await runImageGeneration(env, buildFullPrompt(attemptPrompt, seed), seed);
+      const generated = await runImageGeneration(env, buildFullPrompt(attemptPrompt, seed, 'article'), seed);
       if (!generated.ok) {
         lastError = generated.error;
         continue;

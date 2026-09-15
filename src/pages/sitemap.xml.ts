@@ -36,6 +36,8 @@ export const GET: APIRoute = async () => {
     '/artikler',
     '/artikler/anekdoter',
     '/om-kim-sax',
+    '/cookies',
+    '/privatliv',
   ];
 
   const urls = [

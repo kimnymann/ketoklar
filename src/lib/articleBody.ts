@@ -9,6 +9,7 @@ export type ArticleBlock =
   | { type: 'quote'; text: string }
   | { type: 'recipe'; slug: string }
   | { type: 'articleImage'; marker: string }
+  | { type: 'staticImage'; src: string; alt: string }
   | { type: 'foodlist' };
 
 function escapeHtml(s: string): string {
@@ -34,6 +35,12 @@ export function parseArticleBody(body: string): ArticleBlock[] {
 
     if (trimmed.startsWith('## ')) {
       blocks.push({ type: 'heading', text: trimmed.slice(3).trim() });
+      continue;
+    }
+
+    const staticImage = trimmed.match(/^!\[([^\]]+)\]\((\/images\/article-graphics\/[a-z0-9-]+\.svg)\)$/);
+    if (staticImage) {
+      blocks.push({ type: 'staticImage', src: staticImage[2], alt: staticImage[1] });
       continue;
     }
 

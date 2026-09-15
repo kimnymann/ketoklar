@@ -1,0 +1,47 @@
+<aside id="cookie-notice" class="cookie-notice" aria-labelledby="cookie-title" hidden>
+  <div>
+    <h2 id="cookie-title">Cookies, helt enkelt</h2>
+    <p>Vi bruger ingen cookies til statistik eller markedsføring. Når du bedømmer en opskrift, bruger vi en nødvendig cookie til at huske din bedømmelse og et sikkerhedstjek fra Cloudflare.</p>
+    <p><a href="/cookies">Læs om cookies</a> · <a href="/privatliv">Læs om dit privatliv</a></p>
+  </div>
+  <button type="button" id="cookie-dismiss">Forstået</button>
+</aside>
+
+<script>
+  const notice = document.getElementById('cookie-notice');
+  const dismiss = document.getElementById('cookie-dismiss');
+  const key = 'kk_cookie_notice';
+  const lifetime = 180 * 24 * 60 * 60 * 1000;
+  let opener: HTMLElement | null = null;
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || 'null');
+    if (notice) notice.hidden = saved?.version === 1 && Number.isFinite(saved?.expires) && saved.expires > Date.now() && saved.expires <= Date.now() + lifetime;
+  } catch {
+    if (notice) notice.hidden = false;
+  }
+  dismiss?.addEventListener('click', () => {
+    try { localStorage.setItem(key, JSON.stringify({ version: 1, expires: Date.now() + lifetime })); } catch { /* The notice still closes if storage is unavailable. */ }
+    if (notice) notice.hidden = true;
+    if (opener) opener.focus();
+    else document.querySelector<HTMLAnchorElement>('.site-logo')?.focus();
+  });
+  document.querySelectorAll<HTMLElement>('[data-cookie-notice]').forEach((trigger) => {
+    trigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      opener = trigger;
+      if (notice) notice.hidden = false;
+      dismiss?.focus();
+    });
+  });
+</script>
+
+<style>
+  .cookie-notice[hidden] { display: none; }
+  .cookie-notice { position: fixed; z-index: 100; inset: auto 1rem 1rem; margin-inline: auto; max-width: 58rem; display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem; max-height: 65dvh; overflow-y: auto; color: var(--ink); background: var(--paper-light); border: 1px solid var(--sage); border-radius: 1.25rem; box-shadow: 0 8px 40px #10231a30; }
+  h2 { margin: 0 0 .5rem; font-family: var(--font-display); font-size: 1.5rem; }
+  p { margin: .4rem 0 0; font-size: .9rem; line-height: 1.55; }
+  a { text-decoration: underline; text-underline-offset: .2em; }
+  button { flex-shrink: 0; padding: .85rem 1.5rem; border: 0; border-radius: 999px; background: var(--forest); color: var(--cream); font: inherit; font-weight: 700; cursor: pointer; }
+  :is(a, button):focus-visible { outline: 3px solid var(--tomato-dark); outline-offset: 4px; }
+  @media (max-width: 600px) { .cookie-notice { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1.2rem; } }
+</style>

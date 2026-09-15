@@ -97,7 +97,10 @@ export function buildRecipePrompt(recipe: RecipeForPrompt): string {
   ].join(' ');
 }
 
-export function buildFullPrompt(specificPrompt: string, seed: string): string {
+export function buildFullPrompt(specificPrompt: string, seed: string, kind: 'recipe' | 'article' = 'recipe'): string {
+  if (kind === 'article') {
+    return `${specificPrompt} Style: Nordic editorial photography, realistic materials, natural window light, coherent uncluttered composition, landscape format, no watermark, no lettering. Let the requested subject determine the setting and props; food and tableware are not required.`;
+  }
   return `${specificPrompt} Scene: ${pickSceneVariant(seed)}. Style: ${CORE_STYLE}.`;
 }
 
@@ -123,12 +126,21 @@ function cleanArticleText(value: string): string {
     .trim();
 }
 
+const ARTICLE_VISUAL_CONCEPTS: Record<string, string> = {
+  'ketose-saadan-virker-det': 'Close-up product photograph: a small handheld blood ketone testing meter with a completely blank dark display, next to two narrow unmarked test strips, isolated on a seamless pale grey studio surface. Exactly these three objects and nothing else. Empty background. No cutlery, fabric, table setting, food, letters, logos, blood or needles. A neutral illustration of measurement equipment, with no medical results shown.',
+  'start-paa-keto-kold-tyrker-eller-gradvis': 'An everyday kitchen counter showing preparation for a dietary change: a CLOSED notebook with a plain unmarked beige cover and a shopping basket containing recognisable eggs, avocado and leafy greens. The notebook has no visible pages, lettering, label or logo. No plated meal. The subject is shopping and practical preparation for a new eating routine.',
+  'faste-typer-maaltider-og-laengere-faste': 'A simple empty ceramic dinner plate beside a clear glass of water and an analogue clock with plain tick marks and no numerals. Calm morning light on a dining table. No food. The empty place setting and clock together symbolise an eating window and a pause between meals.',
+};
+
 export function articleFactsForReview(article: ArticleForPrompt): string {
   const context = cleanArticleText(article.excerpt || article.body).slice(0, 700);
-  return `Article title: ${article.title}\nArticle context: ${context}`;
+  const concept = ARTICLE_VISUAL_CONCEPTS[article.slug];
+  return `Article title: ${article.title}\nArticle context: ${context}${concept ? `\nIntended visual concept: ${concept}` : ''}`;
 }
 
 export function buildArticlePrompt(article: ArticleForPrompt): string {
+  const concept = ARTICLE_VISUAL_CONCEPTS[article.slug];
+  if (concept) return `Create a photorealistic editorial photograph. ${concept}`;
   return [
     `Create a photorealistic editorial hero image specifically illustrating the article "${article.title}".`,
     articleFactsForReview(article),

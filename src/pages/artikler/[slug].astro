@@ -198,6 +198,9 @@ const articleStructuredData = {
             </a>
           );
         }
+        if (block.type === 'staticImage') {
+          return <figure class="my-6"><img src={block.src} alt={block.alt} class="w-full h-auto rounded-xl" loading="lazy" /></figure>;
+        }
         if (block.type === 'articleImage') {
           const img = bodyImagesByMarker.get(block.marker);
           if (!img || !img.image_url) return null;

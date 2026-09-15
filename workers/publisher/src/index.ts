@@ -1,5 +1,6 @@
 import { handleTestImages, type ImageEnv } from './testImages';
 import { danishClock, nextDay, planRecipeDay, runRecipeDay } from './recipeDay';
+import { anonymizeExpiredRatings } from '../../../src/lib/ratingRetention';
 import { ensureRecipeImage, ensureArticleImage, ensureArticleBodyImages } from './generateImage';
 
 export interface Env extends ImageEnv {
@@ -273,9 +274,8 @@ async function publishArticleTrack(env: Env, count: number, track: ArticleTrack)
     .prepare(
       `SELECT id, slug, title, category, excerpt, body FROM articles
        WHERE status = 'godkendt' AND published_at IS NULL AND ${where}
-       ORDER BY created_at ASC, id ASC LIMIT ?`
+       ORDER BY created_at ASC, id ASC`
     )
-    .bind(count)
     .all<ArticleQueueItem>();
 
   if (results.length === 0) {
@@ -290,6 +290,7 @@ async function publishArticleTrack(env: Env, count: number, track: ArticleTrack)
   const published: string[] = [];
   const imageWarnings: string[] = [];
   for (const article of results) {
+    if (published.length >= count) break;
     const hero = await ensureArticleImage(env, article);
     if (!hero.ok) {
       imageWarnings.push(`Hero-billede afvist for ${article.slug}: ${hero.error}`);
@@ -417,6 +418,12 @@ export default {
         if (clock.minutes === 420) await prepareImages(env, { recipeLimit: 0, articleLimit: 1 });
         if (clock.minutes === 480 && ![0,2,3,5,6].includes(new Date(`${clock.day}T12:00:00Z`).getUTCDay())) await runPublishing(env);
       })());
+      return;
+    }
+    if (event.cron === '30 * * * *') {
+      ctx.waitUntil(anonymizeExpiredRatings(env.DB).then((result) => {
+        console.log(JSON.stringify({ ratingRetention: result }));
+      }));
       return;
     }
     if (event.cron === DAILY_IMAGE_PREP_CRON) {

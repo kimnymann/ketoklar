@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
+import { RATING_SUMMARY_SQL } from '../../../lib/ratingRetention';
 
 export const prerender = false;
 
@@ -16,7 +17,7 @@ type RatingSummary = {
 function json(body: unknown, status = 200, headers?: HeadersInit) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json; charset=utf-8', ...headers },
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'private, no-store', ...headers },
   });
 }
 
@@ -36,14 +37,12 @@ async function findRecipe(slug: string | undefined) {
 }
 
 async function getSummary(recipeId: number, voterHash?: string): Promise<RatingSummary> {
-  const aggregate = await env.DB.prepare(`
-    SELECT COALESCE(ROUND(AVG(rating), 1), 0) AS average, COUNT(*) AS count
-    FROM recipe_ratings WHERE recipe_id = ?
-  `).bind(recipeId).first<{ average: number; count: number }>();
+  const aggregate = await env.DB.prepare(RATING_SUMMARY_SQL).bind(recipeId).first<{ average: number; count: number }>();
 
   const own = voterHash
     ? await env.DB.prepare(`
         SELECT rating FROM recipe_ratings WHERE recipe_id = ? AND voter_hash = ?
+          AND created_at > datetime('now', '-12 months')
       `).bind(recipeId, voterHash).first<{ rating: number }>()
     : null;
 
