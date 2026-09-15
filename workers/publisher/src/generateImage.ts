@@ -103,6 +103,8 @@ async function reviewedGeneration(
     specificPrompt: string;
     reviewTarget: ReviewTarget;
     force?: boolean;
+    maxAttempts?: number;
+    signal?: AbortSignal;
   }
 ): Promise<ImageOutcome> {
   const current = await env.DB
@@ -129,28 +131,33 @@ async function reviewedGeneration(
   let lastError: string | undefined;
   const runId = crypto.randomUUID();
 
-  for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+  for (let attempt = 1; attempt <= (options.maxAttempts ?? MAX_GENERATION_ATTEMPTS); attempt++) {
+    options.signal?.throwIfAborted();
     // Run-id'et sikrer, at en senere genkørsel ikke producerer præcis de samme
     // afviste billeder igen på grund af et fast seed.
     const seed = `${options.row.slug}-quality-v3-${runId}-${attempt}`;
     const generated = await runImageGeneration(env, buildFullPrompt(attemptPrompt, seed), seed);
+    options.signal?.throwIfAborted();
     if (!generated.ok) {
       lastError = generated.error;
       continue;
     }
 
     const review = await reviewGeneratedImage(env, generated.bytes, options.reviewTarget);
+    options.signal?.throwIfAborted();
     lastReview = review;
     const candidateKey = `review/${options.table}/${options.row.slug}/${runId}-attempt-${attempt}.png`;
     await env.IMAGES.put(candidateKey, generated.bytes, { httpMetadata: { contentType: 'image/png' } });
     const candidateUrl = publicUrl(env, candidateKey);
     await recordReview(env, options.entityType, options.row.id, '', attempt, candidateUrl, review);
+    options.signal?.throwIfAborted();
 
     if (review.approved) {
       // En unik URL forhindrer, at browser eller CDN viser en cachet, ældre version.
       const finalKey = `${options.table}/${options.row.slug}-${runId}.png`;
       await env.IMAGES.put(finalKey, generated.bytes, { httpMetadata: { contentType: 'image/png' } });
       const url = publicUrl(env, finalKey);
+      options.signal?.throwIfAborted();
       await env.DB
         .prepare(
           `UPDATE ${options.table}
@@ -176,19 +183,20 @@ async function reviewedGeneration(
   return {
     ok: false,
     error: lastReview
-      ? `Billedet blev afvist efter ${MAX_GENERATION_ATTEMPTS} forsøg (${lastReview.score}/100): ${lastReview.reason}`
+      ? `Billedet blev afvist efter ${options.maxAttempts ?? MAX_GENERATION_ATTEMPTS} forsøg (${lastReview.score}/100): ${lastReview.reason}`
       : lastError || 'Billedgenereringen fejlede.',
     review: lastReview,
   };
 }
 
-export async function ensureRecipeImage(env: ImageEnv, recipe: RecipeRow, force = false): Promise<ImageOutcome> {
+export async function ensureRecipeImage(env: ImageEnv, recipe: RecipeRow, force = false, control: { maxAttempts?: number; signal?: AbortSignal } = {}): Promise<ImageOutcome> {
   return reviewedGeneration(env, {
     entityType: 'recipe',
     table: 'recipes',
     row: recipe,
     specificPrompt: buildRecipePrompt(recipe),
     reviewTarget: { kind: 'recipe', value: recipe },
+    ...control,
     force,
   });
 }

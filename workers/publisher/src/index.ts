@@ -1,4 +1,5 @@
 import { handleTestImages, type ImageEnv } from './testImages';
+import { danishClock, nextDay, planRecipeDay, runRecipeDay } from './recipeDay';
 import { ensureRecipeImage, ensureArticleImage, ensureArticleBodyImages } from './generateImage';
 
 export interface Env extends ImageEnv {
@@ -12,7 +13,6 @@ const ANECDOTES_PER_THURSDAY = 1;
 const LOW_ARTICLE_QUEUE_THRESHOLD = 2;
 const RECIPE_READY_TARGET_PER_CATEGORY = 2;
 // Efter dagens udgivelse må én kategori naturligt være faldet fra to til én.
-const LOW_RECIPE_READY_QUEUE_THRESHOLD = RECIPE_READY_TARGET_PER_CATEGORY * 4 - 1;
 const RECIPE_CATEGORY_ROTATION = ['morgen', 'frokost', 'aften', 'laekkerier'] as const;
 const DAILY_IMAGE_PREP_CRON = '0 5 * * *';
 const DAILY_PUBLISH_CRON = '0 6 * * *';
@@ -237,50 +237,8 @@ async function regenerateRecipes(env: Env, slugs: string[]) {
 }
 
 async function publishRecipes(env: Env) {
-  const publishedToday = await env.DB
-    .prepare(`SELECT COUNT(*) AS count FROM recipes WHERE published_at >= date('now')`)
-    .first<{ count: number }>();
-  if ((publishedToday?.count ?? 0) > 0) {
-    return { published: [] as string[], warning: 'Dagens opskrift er allerede udgivet.', imageWarnings: [] as string[] };
-  }
-
-  const priority = await categoryPriority(env, false);
-  for (const category of priority) {
-    const recipe = await env.DB
-      .prepare(
-        `SELECT id, slug, title, category, ingredients_json, instructions FROM recipes r
-         WHERE status = 'godkendt' AND published_at IS NULL AND category = ?
-           AND image_status = 'klar' AND image_url IS NOT NULL
-           AND COALESCE((
-             SELECT status FROM image_reviews ir
-             WHERE ir.entity_type = 'recipe' AND ir.entity_id = r.id AND ir.marker = ''
-             ORDER BY ir.id DESC LIMIT 1
-           ), '') = 'godkendt'
-         ORDER BY created_at ASC, id ASC LIMIT 1`
-      )
-      .bind(category)
-      .first<RecipeQueueItem>();
-    if (!recipe) continue;
-
-    const updated = await env.DB
-      .prepare(`UPDATE recipes SET published_at = datetime('now') WHERE id = ? AND published_at IS NULL`)
-      .bind(recipe.id)
-      .run();
-    if ((updated.meta.changes ?? 0) > 0) {
-      return { published: [recipe.slug], category: recipe.category, warning: null, imageWarnings: [] as string[] };
-    }
-  }
-
-  const readiness = await recipeQueueReadiness(env);
-  const queued = readiness.reduce((sum, row) => sum + row.queued, 0);
-  const ready = readiness.reduce((sum, row) => sum + row.ready, 0);
-  return {
-    published: [] as string[],
-    warning: queued === 0
-      ? 'Opskriftskøen er tom, ingen nye opskrifter at udgive.'
-      : `Ingen af de ${ready} billedgodkendte opskrifter kunne bruges uden at gentage gårsdagens kategori.`,
-    imageWarnings: [] as string[],
-  };
+  await runRecipeDay(env);
+  return { published: [] as string[], warning: null, imageWarnings: [] as string[] };
 }
 
 function articleTrackDetails(track: ArticleTrack) {
@@ -382,7 +340,7 @@ async function runPublishing(env: Env) {
     ? await publishArticleTrack(env, ARTICLES_PER_MONDAY, 'article')
     : idleTrack;
   const anecdoteResult = weekday === 4
-    ? await publishArticleTrack(env, ANECDOTES_PER_THURSDAY, 'anekdote')
+    ? await publishArticleTrack(env, ANECDOTES_PER_THURSDAY, 'anecdote')
     : idleTrack;
   const summary = {
     timestamp: new Date().toISOString(),
@@ -441,60 +399,7 @@ async function sendPublisherAlert(env: Env, subject: string, text: string) {
 }
 
 async function runRecipeWatchdog(env: Env) {
-  // Idempotensen i publishRecipes gør dette sikkert: er dagens opskrift allerede
-  // ude, foretages ingen ny udgivelse. Ellers bruges en godkendt reserve.
-  const weekday = new Date().getUTCDay();
-  const isEditorialDay = weekday === 1 || weekday === 4;
-  const publication = isEditorialDay
-    ? {
-        published: [] as string[],
-        warning: weekday === 1
-          ? 'Ingen opskrift planlagt på artikeldagen.'
-          : 'Ingen opskrift planlagt på anekdotedagen.',
-        imageWarnings: [] as string[],
-      }
-    : await publishRecipes(env);
-  const publishedToday = await env.DB
-    .prepare(`SELECT COUNT(*) AS count FROM recipes WHERE published_at >= date('now')`)
-    .first<{ count: number }>();
-  const readiness = await recipeQueueReadiness(env);
-  const readyTotal = readiness.reduce((sum, row) => sum + row.ready, 0);
-  const emptyReadyCategories = readiness.filter((row) => row.queued > 0 && row.ready === 0);
-  const issues: string[] = [];
-
-  if (!isEditorialDay && (publishedToday?.count ?? 0) === 0) {
-    issues.push(`Ingen opskrift blev udgivet i dag. ${publication.warning ?? ''}`.trim());
-  }
-  if (readyTotal < LOW_RECIPE_READY_QUEUE_THRESHOLD) {
-    issues.push(`Den udgivelsesklare kø har kun ${readyTotal} opskrifter tilbage.`);
-  }
-  if (emptyReadyCategories.length > 0) {
-    issues.push(`Ingen billedgodkendt reserve i: ${emptyReadyCategories.map((row) => row.category).join(', ')}.`);
-  }
-
-  const summary = {
-    timestamp: new Date().toISOString(),
-    publication,
-    readiness,
-    issues,
-  };
-  if (issues.length > 0) {
-    const queueLines = readiness.map((row) => `- ${row.category}: ${row.ready} klar / ${row.queued} i kø`);
-    await sendPublisherAlert(
-      env,
-      `[Ketoklar] Opskriftsmotoren kræver opmærksomhed ${new Date().toISOString().slice(0, 10)}`,
-      [
-        'Ketoklars automatiske opskriftskontrol har fundet følgende:',
-        '',
-        ...issues,
-        '',
-        'Status for køen:',
-        ...queueLines,
-      ].join('\n')
-    );
-  }
-  console.log(JSON.stringify({ recipeWatchdog: summary }));
-  return summary;
+  return runRecipeDay(env);
 }
 
 function isAuthorized(request: Request, env: Env, url: URL): boolean {
@@ -504,11 +409,21 @@ function isAuthorized(request: Request, env: Env, url: URL): boolean {
 
 export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    if (event.cron === '*/5 * * * *') {
+      const clock = danishClock();
+      ctx.waitUntil((async () => {
+        await runRecipeDay(env);
+        if (clock.minutes >= 600) await planRecipeDay(env, nextDay(clock.day));
+        if (clock.minutes === 420) await prepareImages(env, { recipeLimit: 0, articleLimit: 1 });
+        if (clock.minutes === 480 && ![0,2,3,5,6].includes(new Date(`${clock.day}T12:00:00Z`).getUTCDay())) await runPublishing(env);
+      })());
+      return;
+    }
     if (event.cron === DAILY_IMAGE_PREP_CRON) {
       // Hold op til to billedgodkendte reserver klar i hver kategori. To ældre
       // billeder opgraderes dagligt, indtil hele arkivet er kvalitetstjekket.
       ctx.waitUntil(
-        prepareImages(env, { recipeLimit: 8, articleLimit: 1, legacyRecipeLimit: 2, legacyArticleLimit: 1 })
+        prepareImages(env, { recipeLimit: 0, articleLimit: 1 })
       );
       return;
     }
