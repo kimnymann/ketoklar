@@ -1,0 +1,2 @@
+# Copy to .dev.vars and use a local-only value.
+PUBLISH_SECRET=

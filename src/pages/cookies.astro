@@ -2,17 +2,17 @@
 import PolicyLayout from '../layouts/PolicyLayout.astro';
 ---
 <PolicyLayout title="Cookiepolitik" description="Læs om Ketoklars nødvendige cookies, lokal lagring og sikkerhedstjek ved opskriftsbedømmelser.">
-  <p>Ketoklar bruger ikke cookies til statistik eller markedsføring. Vi bruger kun lagring til de funktioner, du benytter. Derfor indeholder vores banner en oplysning og en “Forstået”-knap, ikke et samtykke til sporing.</p>
+  <p>Ketoklar bruger nødvendige funktioner til bedømmelser og til at huske dit statistikvalg. Valgfri besøgsstatistik fra Cloudflare Web Analytics indlæses kun, hvis du vælger “Ja til statistik”. Du kan lige så let vælge “Nej til statistik” og stadig bruge hele hjemmesiden. Statistikken anvender ikke cookies, men indsamler oplysninger fra browseren. Vi bruger ingen markedsføringscookies.</p>
   <h2>Hvad gemmes på din enhed?</h2>
   <ul>
     <li><strong>Din bedømmelse · <code>kk_rating_id</code>:</strong> En førstepartscookie fra Ketoklar, som sættes, når du sender en opskriftsbedømmelse gennem sikkerhedstjekket. Den indeholder et tilfældigt ID, så din bedømmelse kan genkendes og ændres uden at tælle som flere stemmer. Den udløber efter højst 365 dage. Den er nødvendig for bedømmelsesfunktionen og bruges ikke til annoncer eller statistik om din færden.</li>
-    <li><strong>Bannerets visning · <code>kk_cookie_notice</code>:</strong> Når du trykker “Forstået”, gemmer vi bannerets version og udløbstid i din browsers localStorage, så beskeden ikke vises på hver side. Oplysningen sendes ikke til vores server. Den gælder i 180 dage; efter udløb vises banneret igen. Den lagrede værdi overskrives, når du lukker banneret igen, eller fjernes, når du sletter webstedsdata.</li>
+    <li><strong>Dit statistikvalg · <code>kk_analytics_consent</code>:</strong> Vi gemmer dit ja eller nej, version og udløbstid i browserens localStorage i højst 180 dage. Valget sendes ikke til vores server. Efter udløb spørger vi igen. Et tidligere klik på “Forstået” (<code>kk_cookie_notice</code>) regnes ikke som samtykke til statistik.</li>
   </ul>
   <h2>Sikkerhed ved bedømmelser</h2>
   <p>Cloudflare Turnstile indlæses først, når du vælger stjerner. Tjenesten undersøger tekniske oplysninger om din browser og forbindelse for at beskytte mod automatiske stemmer. Den bruges udelukkende til sikkerhed. Læs om behandlingen i <a href="/privatliv">privatlivspolitikken</a> og <a href="https://www.cloudflare.com/privacypolicy/">Cloudflares privatlivspolitik</a>.</p>
   <h2>Du bestemmer over din browser</h2>
   <p>Du kan blokere eller slette cookies og webstedsdata i din browser. Sletter du bedømmelsescookien, kan vi ikke længere genkende dine tidligere bedømmelser i browseren. Sletning af cookies sletter ikke automatisk de bedømmelser, der allerede er gemt hos os. Efter 12 måneder fra oprettelsen fjernes forbindelsen til browseren ved vores automatiske oprydning hver time; kun samlede optællinger pr. opskrift bevares. Du kan stadig læse sidens indhold uden at bedømme opskrifter.</p>
-  <p><a href="/cookies" data-cookie-notice>Vis cookieoplysninger igen</a>. Der er aktuelt ingen valgfrie cookieformål at slå til eller fra. Hvis vi indfører sådanne formål, skal vi først indhente dit samtykke.</p>
+  <p><a href="/cookies" data-cookie-notice>Ændr dit valg eller træk samtykket tilbage</a>. Vælg “Nej til statistik” for at stoppe efterfølgende måling. Hvis statistikken er indlæst, genindlæses siden uden den. Allerede indsamlede målinger trækkes ikke tilbage. Cloudflare leverer statistikken og kan behandle oplysninger uden for EU/EØS. Læs mere om formål, oplysninger og leverandøren i <a href="/privatliv">privatlivspolitikken</a>.</p>
   <h2>Kontakt</h2>
   <p>Ketoklar · Sax Gruppen · CVR 38239031 · Idylvænget 19, 6000 Kolding. Skriv til <a href="mailto:hej@ketoklar.dk">hej@ketoklar.dk</a>, hvis du har spørgsmål.</p>
 </PolicyLayout>

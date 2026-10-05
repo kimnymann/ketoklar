@@ -1,0 +1,102 @@
+---
+interface Props { items: string[] }
+const { items } = Astro.props;
+const groups = items.map(item => {
+  const match = item.match(/^<strong>([^<]+):<\/strong>\s*([\s\S]+)$/);
+  const text = match?.[2] ?? item.replace(/<[^>]+>/g, '');
+  const [ingredients, ...notes] = text.split(/\.\s+/);
+  // Keep family alternatives together rather than implying they are keto staples.
+  const entries = match?.[1] === 'Til familien' ? [text.replace(/\.$/, '')]
+    : ingredients.replace(/\.$/, '').split(/,\s*| og /);
+  return { title: match?.[1] ?? 'Indkøb', entries, note: notes.join('. ') };
+});
+---
+<section class="shopping-list" data-shopping-list aria-label="Din basisindkøbsliste">
+  <header>
+    <span class="eyebrow">Fra artikel til indkøbskurv</span>
+    <h3>Sæt hak, når varen er i hus</h3>
+    <p>Vælg det, du skal bruge. Listen er uden faste mængder.</p>
+  </header>
+  <div class="shopping-groups">
+    {groups.map((group, g) => (
+      <fieldset>
+        <legend>{group.title}</legend>
+        {group.entries.map((item, i) => (
+          <label><input type="checkbox" value={`${g}-${i}`} data-item={item} /><span>{item.charAt(0).toUpperCase() + item.slice(1)}</span></label>
+        ))}
+        {group.note && <p class="note">{group.note}</p>}
+      </fieldset>
+    ))}
+  </div>
+  <div class="shopping-tools" hidden>
+    <p data-progress aria-live="polite"></p>
+    <div class="buttons"><button type="button" data-copy>Kopiér manglende varer</button><button type="button" data-reset>Nulstil listen</button></div>
+    <p class="note" data-storage>Afkrydsninger gemmes kun i denne browser. Ingen oplysninger sendes til os.</p>
+    <p class="note" role="status" data-feedback></p>
+    <textarea hidden readonly aria-label="Indkøbsliste til manuel kopiering"></textarea>
+  </div>
+</section>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-shopping-list]').forEach(root => {
+    const key = 'ketoklar:travl-hverdag:indkoeb:v1';
+    const boxes = [...root.querySelectorAll<HTMLInputElement>('input[type=checkbox]')];
+    const progress = root.querySelector<HTMLElement>('[data-progress]')!;
+    const feedback = root.querySelector<HTMLElement>('[data-feedback]')!;
+    const storageNote = root.querySelector<HTMLElement>('[data-storage]')!;
+    const fallback = root.querySelector<HTMLTextAreaElement>('textarea')!;
+    root.querySelector<HTMLElement>('.shopping-tools')!.hidden = false;
+    const unavailable = () => { storageNote.textContent = 'Browseren tillader ikke lagring. Listen virker stadig, men huskes ikke efter genindlæsning.'; };
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) ?? '[]');
+      if (Array.isArray(saved)) boxes.forEach(box => box.checked = saved.includes(box.value));
+    } catch { unavailable(); }
+    function update(save = true) {
+      progress.textContent = `${boxes.filter(box => box.checked).length} af ${boxes.length} varer på plads`;
+      fallback.hidden = true;
+      feedback.textContent = '';
+      if (save) {
+        try { localStorage.setItem(key, JSON.stringify(boxes.filter(box => box.checked).map(box => box.value))); }
+        catch { unavailable(); }
+      }
+    }
+    boxes.forEach(box => box.addEventListener('change', () => update()));
+    root.querySelector('[data-reset]')!.addEventListener('click', () => {
+      boxes.forEach(box => box.checked = false); update(false);
+      try { localStorage.removeItem(key); } catch { unavailable(); }
+      feedback.textContent = 'Listen er nulstillet.';
+    });
+    root.querySelector('[data-copy]')!.addEventListener('click', async () => {
+      const missing = boxes.filter(box => !box.checked).map(box => box.dataset.item!);
+      if (!missing.length) { feedback.textContent = 'Alle varer er allerede afkrydset.'; return; }
+      const text = 'Min indkøbsliste fra Ketoklar\n\n' + missing.map(item => '• ' + item).join('\n');
+      try { await navigator.clipboard.writeText(text); feedback.textContent = 'De manglende varer er kopieret.'; }
+      catch { fallback.value = text; fallback.hidden = false; fallback.focus(); fallback.select(); feedback.textContent = 'Markér og kopiér listen fra feltet nedenfor.'; }
+    });
+    update(false);
+  });
+</script>
+<style>
+  .shopping-list { border:1px solid #cbd5c6; border-radius:20px; background:#f6f7ef; overflow:hidden; }
+  header { background:#234735; color:#fffdf5; padding:1.5rem; }
+  .eyebrow { text-transform:uppercase; font-size:.7rem; letter-spacing:.12em; }
+  h3 { font-family:var(--font-display); font-size:1.65rem; line-height:1.25; margin:.4rem 0 .65rem; }
+  header p { font-size:.9rem; }
+  .shopping-groups { padding:1.5rem; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.5rem; }
+  fieldset { min-width:0; border:0; padding:0; margin:0; }
+  legend { font-weight:700; font-size:1.05rem; padding:0 0 .55rem; color:#234735; }
+  label { display:flex; align-items:flex-start; gap:.65rem; padding:.5rem 0; cursor:pointer; line-height:1.5; }
+  input { accent-color:#234735; width:1.2rem; height:1.2rem; margin-top:.15rem; flex-shrink:0; }
+  input:checked + span { text-decoration:line-through; color:#626b60; }
+  input:focus-visible, button:focus-visible, textarea:focus-visible { outline:3px solid var(--rust); outline-offset:3px; }
+  .shopping-tools { padding:1.25rem 1.5rem; border-top:1px solid #cbd5c6; }
+  .shopping-tools[hidden], textarea[hidden] { display:none; }
+  [data-progress] { font-weight:600; margin-bottom:.75rem; }
+  .buttons { display:flex; flex-wrap:wrap; gap:.75rem; }
+  button { border:1px solid #234735; border-radius:999px; padding:.7rem 1rem; min-height:44px; cursor:pointer; font:inherit; font-size:.9rem; }
+  button[data-copy] { background:#234735; color:#fffdf5; }
+  button[data-reset] { background:transparent; color:#234735; }
+  .note { font-size:.78rem; line-height:1.5; margin-top:.7rem; color:#505c50; }
+  textarea { width:100%; min-height:180px; margin-top:.75rem; padding:.75rem; background:white; }
+  @media(max-width:480px) { .shopping-groups { grid-template-columns:1fr; } header,.shopping-groups,.shopping-tools { padding:1.15rem; } }
+  @media print { .shopping-tools { display:none !important; } .shopping-list { break-inside:auto; } fieldset { break-inside:avoid; } }
+</style>

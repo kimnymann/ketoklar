@@ -1,0 +1,2 @@
+# Copy to .dev.vars for local rating verification only. Never use production secrets here.
+TURNSTILE_SECRET_KEY=

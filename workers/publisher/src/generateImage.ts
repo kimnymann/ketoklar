@@ -15,6 +15,7 @@ export type ImageOutcome = {
   url?: string | null;
   review?: ImageReview;
   reused?: boolean;
+  failureKind?: 'technical' | 'content';
 };
 
 const BODY_IMAGE_MARKER = /\[\[image:([a-z0-9-]+)\|([^\]]+)\]\]/g;
@@ -186,6 +187,7 @@ async function reviewedGeneration(
       ? `Billedet blev afvist efter ${options.maxAttempts ?? MAX_GENERATION_ATTEMPTS} forsøg (${lastReview.score}/100): ${lastReview.reason}`
       : lastError || 'Billedgenereringen fejlede.',
     review: lastReview,
+    failureKind: !lastReview || lastReview.reason.startsWith('Automatisk billedkontrol fejlede:') ? 'technical' : 'content',
   };
 }
 
@@ -201,13 +203,14 @@ export async function ensureRecipeImage(env: ImageEnv, recipe: RecipeRow, force 
   });
 }
 
-export async function ensureArticleImage(env: ImageEnv, article: ArticleRow, force = false): Promise<ImageOutcome> {
+export async function ensureArticleImage(env: ImageEnv, article: ArticleRow, force = false, control: { maxAttempts?: number; signal?: AbortSignal } = {}): Promise<ImageOutcome> {
   return reviewedGeneration(env, {
     entityType: 'article',
     table: 'articles',
     row: article,
     specificPrompt: buildArticlePrompt(article),
     reviewTarget: { kind: 'article', value: article },
+    ...control,
     force,
   });
 }
@@ -215,13 +218,15 @@ export async function ensureArticleImage(env: ImageEnv, article: ArticleRow, for
 export async function ensureArticleBodyImages(
   env: ImageEnv,
   article: { id: number; slug: string; title: string; body: string },
-  force = false
-): Promise<Array<{ marker: string; ok: boolean; error?: string }>> {
-  const matches = [...article.body.matchAll(BODY_IMAGE_MARKER)];
+  force = false,
+  control: { maxAttempts?: number; signal?: AbortSignal; marker?: string } = {}
+): Promise<Array<{ marker: string; ok: boolean; error?: string; failureKind?: 'technical' | 'content' }>> {
+  const matches = [...article.body.matchAll(BODY_IMAGE_MARKER)].filter(match => !control.marker || match[1] === control.marker);
   if (matches.length === 0) return [];
 
-  const outcomes: Array<{ marker: string; ok: boolean; error?: string }> = [];
+  const outcomes: Array<{ marker: string; ok: boolean; error?: string; failureKind?: 'technical' | 'content' }> = [];
   for (const match of matches) {
+    control.signal?.throwIfAborted();
     const [, marker, prompt] = match;
     await env.DB
       .prepare(
@@ -257,9 +262,11 @@ export async function ensureArticleBodyImages(
     let lastError: string | undefined;
     const runId = crypto.randomUUID();
 
-    for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+    for (let attempt = 1; attempt <= (control.maxAttempts ?? MAX_GENERATION_ATTEMPTS); attempt++) {
+      control.signal?.throwIfAborted();
       const seed = `${article.slug}-${marker}-quality-v3-${runId}-${attempt}`;
       const generated = await runImageGeneration(env, buildFullPrompt(attemptPrompt, seed, 'article'), seed);
+      control.signal?.throwIfAborted();
       if (!generated.ok) {
         lastError = generated.error;
         continue;
@@ -270,11 +277,13 @@ export async function ensureArticleBodyImages(
         title: article.title,
         prompt: prompt.trim(),
       });
+      control.signal?.throwIfAborted();
       lastReview = review;
       const candidateKey = `review/articles/${article.slug}/${marker}-${runId}-attempt-${attempt}.png`;
       await env.IMAGES.put(candidateKey, generated.bytes, { httpMetadata: { contentType: 'image/png' } });
       const candidateUrl = publicUrl(env, candidateKey);
       await recordReview(env, 'article_body', row.id, marker, attempt, candidateUrl, review);
+      control.signal?.throwIfAborted();
 
       if (review.approved) {
         const finalKey = `articles/${article.slug}/${marker}-${runId}.png`;
@@ -298,6 +307,7 @@ export async function ensureArticleBodyImages(
         error: lastReview
           ? `Billedet blev afvist (${lastReview.score}/100): ${lastReview.reason}`
           : lastError || 'Billedgenereringen fejlede.',
+        failureKind: !lastReview || lastReview.reason.startsWith('Automatisk billedkontrol fejlede:') ? 'technical' : 'content',
       });
     } else {
       outcomes.push({ marker, ok: true });

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { absoluteUrl, toIsoDateTime } from '../lib/seo';
+import { absoluteUrl, articleDates, toIsoDateTime } from '../lib/seo';
 
 type SitemapRow = { slug: string; published_at: string | null; updated_at?: string | null };
 
@@ -40,7 +40,7 @@ export const GET: APIRoute = async () => {
     '/privatliv',
   ];
 
-  const urls = [
+  const urls: { loc: string; lastmod?: string | null }[] = [
     ...staticPaths.map((path) => ({ loc: absoluteUrl(path) })),
     ...recipes.map((recipe) => ({
       loc: absoluteUrl(`/opskrifter/${recipe.slug}`),
@@ -48,7 +48,7 @@ export const GET: APIRoute = async () => {
     })),
     ...articles.map((article) => ({
       loc: absoluteUrl(`/artikler/${article.slug}`),
-      lastmod: toIsoDateTime(article.updated_at ?? article.published_at),
+      lastmod: articleDates(article.published_at, article.updated_at).lastmod,
     })),
   ];
 

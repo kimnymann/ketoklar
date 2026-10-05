@@ -1,36 +1,59 @@
 <aside id="cookie-notice" class="cookie-notice" aria-labelledby="cookie-title" hidden>
   <div>
-    <h2 id="cookie-title">Cookies, helt enkelt</h2>
-    <p>Vi bruger ingen cookies til statistik eller markedsføring. Når du bedømmer en opskrift, bruger vi en nødvendig cookie til at huske din bedømmelse og et sikkerhedstjek fra Cloudflare.</p>
+    <h2 id="cookie-title">Må vi måle besøget?</h2>
+    <p>Med dit ja bruger vi Cloudflare Web Analytics til besøgsstatistik og måling af sidens hastighed. Statistikken bruger ikke cookies. Cloudflare kan behandle oplysninger uden for EU/EØS. Vi bruger ingen annoncesporing. Bedømmelser bruger en nødvendig cookie og et sikkerhedstjek.</p>
     <p><a href="/cookies">Læs om cookies</a> · <a href="/privatliv">Læs om dit privatliv</a></p>
   </div>
-  <button type="button" id="cookie-dismiss">Forstået</button>
+  <div class="cookie-actions">
+    <button type="button" id="cookie-reject">Nej til statistik</button>
+    <button type="button" id="cookie-accept">Ja til statistik</button>
+  </div>
 </aside>
 
 <script>
   const notice = document.getElementById('cookie-notice');
-  const dismiss = document.getElementById('cookie-dismiss');
-  const key = 'kk_cookie_notice';
+  const reject = document.getElementById('cookie-reject');
+  const accept = document.getElementById('cookie-accept');
+  const key = 'kk_analytics_consent';
   const lifetime = 180 * 24 * 60 * 60 * 1000;
   let opener: HTMLElement | null = null;
+  let analyticsLoaded = false;
+  function loadAnalytics() {
+    if (analyticsLoaded || location.hostname !== 'ketoklar.dk') return;
+    analyticsLoaded = true;
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+    script.dataset.cfBeacon = JSON.stringify({ token: 'd388f3d9d2b1464faf9cfded6f2fd726' });
+    document.head.appendChild(script);
+  }
   try {
     const saved = JSON.parse(localStorage.getItem(key) || 'null');
-    if (notice) notice.hidden = saved?.version === 1 && Number.isFinite(saved?.expires) && saved.expires > Date.now() && saved.expires <= Date.now() + lifetime;
+    const valid = saved?.version === 1 && typeof saved?.allowed === 'boolean' && Number.isFinite(saved?.expires) && saved.expires > Date.now() && saved.expires <= Date.now() + lifetime;
+    if (notice) notice.hidden = valid;
+    if (valid && saved.allowed) loadAnalytics();
   } catch {
     if (notice) notice.hidden = false;
   }
-  dismiss?.addEventListener('click', () => {
-    try { localStorage.setItem(key, JSON.stringify({ version: 1, expires: Date.now() + lifetime })); } catch { /* The notice still closes if storage is unavailable. */ }
+  function choose(allowed: boolean) {
+    try { localStorage.setItem(key, JSON.stringify({ version: 1, allowed, expires: Date.now() + lifetime })); } catch { /* Choice applies to this page even without storage. */ }
     if (notice) notice.hidden = true;
+    if (!allowed && analyticsLoaded) { location.reload(); return; }
+    if (allowed) loadAnalytics();
     if (opener) opener.focus();
     else document.querySelector<HTMLAnchorElement>('.site-logo')?.focus();
+  }
+  reject?.addEventListener('click', () => choose(false));
+  accept?.addEventListener('click', () => choose(true));
+  window.addEventListener('storage', (event) => {
+    if (event.key === key || event.key === null) location.reload();
   });
   document.querySelectorAll<HTMLElement>('[data-cookie-notice]').forEach((trigger) => {
     trigger.addEventListener('click', (event) => {
       event.preventDefault();
       opener = trigger;
       if (notice) notice.hidden = false;
-      dismiss?.focus();
+      reject?.focus();
     });
   });
 </script>
@@ -42,6 +65,7 @@
   p { margin: .4rem 0 0; font-size: .9rem; line-height: 1.55; }
   a { text-decoration: underline; text-underline-offset: .2em; }
   button { flex-shrink: 0; padding: .85rem 1.5rem; border: 0; border-radius: 999px; background: var(--forest); color: var(--cream); font: inherit; font-weight: 700; cursor: pointer; }
+  .cookie-actions { display: flex; flex-direction: column; gap: .6rem; flex-shrink: 0; }
   :is(a, button):focus-visible { outline: 3px solid var(--tomato-dark); outline-offset: 4px; }
   @media (max-width: 600px) { .cookie-notice { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1.2rem; } }
 </style>

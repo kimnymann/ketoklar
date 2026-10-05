@@ -11,6 +11,15 @@ export function toIsoDateTime(value: string | null): string | undefined {
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
 
+// Draft edits are not public updates. Keep all public date signals consistent.
+export function articleDates(publishedAt: string | null, updatedAt?: string | null) {
+  const published = toIsoDateTime(publishedAt);
+  const updated = toIsoDateTime(updatedAt ?? null);
+  const modified = published && updated && Date.parse(updated) > Date.parse(published)
+    ? updated : undefined;
+  return { published, modified, lastmod: modified ?? published };
+}
+
 export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
   return {
     '@type': 'BreadcrumbList',

@@ -1,44 +1,36 @@
-# Astro Starter Kit: Minimal
+# Ketoklar
+
+Astro 7, TypeScript og Tailwind 4 på Cloudflare Workers, med D1 og en separat publisher i `workers/publisher`.
+
+## Lokal udvikling på Mac
+
+Brug Node 24 (minimum 22.12.0) og npm. Installer fra lockfilerne:
 
 ```sh
-npm create astro@latest -- --template minimal
+npm ci
+npm ci --prefix workers/publisher
+npm run db:setup:local
+npm run check
+npm test
+npm run build
+npm run dev -- --background
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Administrér serveren med `npm run astro -- dev status`, `npm run astro -- dev logs` og `npm run astro -- dev stop`.
+Standardadressen er http://localhost:4321. Databasen oprettes lokalt under `.wrangler`; bootstrap er til en ny udviklingsdatabase og er ikke en komplet produktionskopi eller generel migrationsrunner.
 
-## 🚀 Project Structure
+`npm run check` genererer Cloudflare-typer og kontrollerer både Astro og publisher-TypeScript. Der er endnu ingen særskilt lint-konfiguration. `npm test` kører kun `*.test.mjs`, aldrig release- eller preview-scripts.
 
-Inside of your Astro project, you'll see the following folders and files:
+## Secrets og tjenester
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+Lokale secrets gemmes i ignorerede `.dev.vars`-filer; se `.dev.vars.example` og `workers/publisher/.dev.vars.example`. Publisheren har fået en separat lokal publish-secret. Rating-koden bruger allerede Turnstiles testnøgler på localhost. Produktion kræver Cloudflare-login/rettigheder samt de eksisterende secrets og bindings til D1, R2, Workers AI, email og Turnstile.
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Produktion og historiske filer
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Push til `main` kan udløse publisher-deploy og D1-skema/seed via GitHub Actions. Kontrollér workflows og produktionsstatus før push. `tests/release-article-widgets.mjs` og scripts under `output/` kan ændre produktion og indgår ikke i tests.
 
-Any static assets, like images, can be placed in the `public/` directory.
+`output/` og `workers/publisher/output/` er bevarede historiske release-, billed- og eksportartefakter, ignoreret af Git. Nogle henviser til gamle Windows-stier og må gennemgås før genbrug. `output/publisher-release-20260915/.git` refererer til en Windows-worktree.
 
-## 🧞 Commands
+En fuld backup fra før Mac-klargøringen ligger under `.local-backups/`, inklusive oprindelige secrets, databaser, dependencies og Git-data. Mappen er privat og ignoreret af Git. Bevar en separat kopi uden for denne Mac for beskyttelse mod disktab.
 
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
+Astro-dokumentation: https://docs.astro.build/en/guides/typescript/

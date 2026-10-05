@@ -1,5 +1,8 @@
 import { handleTestImages, type ImageEnv } from './testImages';
-import { danishClock, nextDay, planRecipeDay, runRecipeDay } from './recipeDay';
+import { danishClock, dayBounds, nextDay, planRecipeDay, runRecipeDay } from './recipeDay';
+import { runEditorialDay } from './editorialDay';
+import { prepareRecipeReserve, reserveStatus, warnLowRecipeReserve } from './recipeReserve';
+import { articleImageReadiness, articleReserveStatus, prepareArticleReserve, warnLowArticleReserve } from './articleReserve';
 import { anonymizeExpiredRatings } from '../../../src/lib/ratingRetention';
 import { ensureRecipeImage, ensureArticleImage, ensureArticleBodyImages } from './generateImage';
 
@@ -258,8 +261,11 @@ async function articleQueueCount(env: Env, track: ArticleTrack): Promise<number>
 
 async function publishArticleTrack(env: Env, count: number, track: ArticleTrack) {
   const { where, label, queueLabel } = articleTrackDetails(track);
+  const day = danishClock().day;
+  const bounds = [dayBounds(day), dayBounds(nextDay(day))];
   const publishedToday = await env.DB
-    .prepare(`SELECT COUNT(*) AS count FROM articles WHERE published_at >= date('now') AND ${where}`)
+    .prepare(`SELECT COUNT(*) AS count FROM articles WHERE published_at >= ? AND published_at < ? AND ${where}`)
+    .bind(...bounds)
     .first<{ count: number }>();
   if ((publishedToday?.count ?? 0) > 0) {
     return {
@@ -291,23 +297,20 @@ async function publishArticleTrack(env: Env, count: number, track: ArticleTrack)
   const imageWarnings: string[] = [];
   for (const article of results) {
     if (published.length >= count) break;
-    const hero = await ensureArticleImage(env, article);
-    if (!hero.ok) {
-      imageWarnings.push(`Hero-billede afvist for ${article.slug}: ${hero.error}`);
-      continue;
-    }
-    const body = await ensureArticleBodyImages(env, article);
-    const failedBody = body.filter((image) => !image.ok);
-    if (failedBody.length > 0) {
-      imageWarnings.push(...failedBody.map((image) => `Billede '${image.marker}' afvist for ${article.slug}: ${image.error}`));
+    const readiness = await articleImageReadiness(env, article);
+    if (!readiness.ready) {
+      imageWarnings.push(`Ikke billedklar: ${article.slug}. Reserveopbygningen håndteres separat.`);
       continue;
     }
 
-    await env.DB
-      .prepare(`UPDATE articles SET published_at = datetime('now') WHERE id = ? AND published_at IS NULL`)
-      .bind(article.id)
+    const publication = await env.DB
+      .prepare(`UPDATE articles SET published_at = datetime('now')
+        WHERE id = ? AND published_at IS NULL AND status = 'godkendt'
+        AND NOT EXISTS (SELECT 1 FROM articles WHERE published_at >= ? AND published_at < ? AND ${where})`)
+      .bind(article.id, ...bounds)
       .run();
-    published.push(article.slug);
+    if (publication.meta.changes > 0) published.push(article.slug);
+    else break; // Another invocation published first; never advance to another post.
   }
 
   const queueRemaining = await articleQueueCount(env, track);
@@ -325,7 +328,7 @@ async function publishArticleTrack(env: Env, count: number, track: ArticleTrack)
 }
 
 async function runPublishing(env: Env) {
-  const weekday = new Date().getUTCDay();
+  const weekday = new Date(`${danishClock().day}T12:00:00Z`).getUTCDay();
   const isEditorialDay = weekday === 1 || weekday === 4;
   const recipeResult = isEditorialDay
     ? {
@@ -361,7 +364,8 @@ async function runPublishing(env: Env) {
     }
     issues.push(...editorialTrack.imageWarnings);
     if (issues.length > 0) {
-      await sendPublisherAlert(
+      const alert = await env.DB.prepare('INSERT OR IGNORE INTO editorial_alert_days(day) VALUES (?)').bind(danishClock().day).run();
+      if (alert.meta.changes) await sendPublisherAlert(
         env,
         `[Ketoklar] ${weekday === 1 ? 'Artikel' : 'Anekdote'} kræver opmærksomhed ${new Date().toISOString().slice(0, 10)}`,
         [
@@ -412,11 +416,18 @@ export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     if (event.cron === '*/5 * * * *') {
       const clock = danishClock();
+      ctx.waitUntil(runEditorialDay(env, () => runPublishing(env)));
+      if (clock.minutes >= 360 && clock.minutes <= 1330 && clock.minutes % 60 === 10) {
+        ctx.waitUntil(prepareRecipeReserve(env).then(result => console.log(JSON.stringify({recipeReserve:result}))));
+      }
+      if (clock.minutes === 1095) ctx.waitUntil(warnLowRecipeReserve(env));
+      if (clock.minutes >= 360 && clock.minutes <= 1335 && clock.minutes % 60 === 15) {
+        ctx.waitUntil(prepareArticleReserve(env).then(result => console.log(JSON.stringify({articleReserve:result}))));
+      }
+      if (clock.minutes === 1100) ctx.waitUntil(warnLowArticleReserve(env));
       ctx.waitUntil((async () => {
         await runRecipeDay(env);
         if (clock.minutes >= 600) await planRecipeDay(env, nextDay(clock.day));
-        if (clock.minutes === 420) await prepareImages(env, { recipeLimit: 0, articleLimit: 1 });
-        if (clock.minutes === 480 && ![0,2,3,5,6].includes(new Date(`${clock.day}T12:00:00Z`).getUTCDay())) await runPublishing(env);
       })());
       return;
     }
@@ -430,7 +441,7 @@ export default {
       // Hold op til to billedgodkendte reserver klar i hver kategori. To ældre
       // billeder opgraderes dagligt, indtil hele arkivet er kvalitetstjekket.
       ctx.waitUntil(
-        prepareImages(env, { recipeLimit: 0, articleLimit: 1 })
+        prepareArticleReserve(env)
       );
       return;
     }
@@ -445,6 +456,27 @@ export default {
 
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
+    if (url.pathname === '/article-reserve-status' && request.method === 'GET') {
+      if (!isAuthorized(request, env, url)) return new Response('Unauthorized', { status: 401 });
+      const state = await articleReserveStatus(env);
+      const review = await env.DB.prepare("SELECT a.slug,a.title,j.last_error FROM article_image_jobs j JOIN articles a ON a.id=j.article_id WHERE j.status='review' AND a.published_at IS NULL").all();
+      return Response.json({tracks:state.tracks,articles:state.rows.map(({slug,title,ready,heroReady,missing})=>({slug,title,ready,heroReady,missing})),review:review.results});
+    }
+    if (url.pathname === '/prepare-article-reserve' && request.method === 'POST') {
+      if (!isAuthorized(request, env, url)) return new Response('Unauthorized', { status: 401 });
+      return Response.json(await prepareArticleReserve(env));
+    }
+
+    if (url.pathname === '/recipe-reserve-status' && request.method === 'GET') {
+      if (!isAuthorized(request, env, url)) return new Response('Unauthorized', { status: 401 });
+      const review = await env.DB.prepare(`SELECT r.slug,r.title,j.content_failures,j.technical_failures,j.last_error
+        FROM recipe_image_jobs j JOIN recipes r ON r.id=j.recipe_id WHERE j.status='review' AND r.published_at IS NULL AND r.image_status!='klar'`).all();
+      return Response.json({...await reserveStatus(env),review:review.results});
+    }
+    if (url.pathname === '/prepare-recipe-reserve' && request.method === 'POST') {
+      if (!isAuthorized(request, env, url)) return new Response('Unauthorized', { status: 401 });
+      return Response.json(await prepareRecipeReserve(env));
+    }
 
     if (url.pathname === '/test-images' && request.method === 'POST') return handleTestImages(request, env);
 

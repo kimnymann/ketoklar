@@ -12,7 +12,7 @@ const KEYWORDS: Record<Exclude<IngredientCategory, 'Andet'>, string[]> = {
     'kyllingebryst', 'kyllingelårfilet', 'mørbrad', 'oksekød', 'svinekød', 'skinke', 'pølse',
   ],
   'Mejeri og æg': [
-    'æg', 'æggehvide', 'mælk', 'fløde', 'smør', 'ost', 'feta', 'flødeost', 'yoghurt', 'skyr', 'parmesan',
+    'æg', 'æggehvide', 'mælk', 'fløde', 'smør', 'ost', 'feta', 'flødeost', 'yoghurt', 'skyr', 'parmesan', 'mozzarella',
   ],
   'Frugt og grønt': [
     'broccoli', 'spinat', 'avocado', 'citron', 'grønkål', 'blomkål', 'spidskål', 'salat', 'romainesalat',
@@ -49,11 +49,21 @@ export function groupIngredientsByCategory(ingredients: Ingredient[]): Array<{ c
   return CATEGORY_ORDER.filter((c) => groups.has(c)).map((c) => ({ category: c, items: groups.get(c)! }));
 }
 
-// Splitter en instruktionstekst i nummererede trin. Vores opskrifter er skrevet som
-// almindelige sætninger adskilt af punktum, så det er det, der bruges som skilletegn.
+// Bevar forkortelser i sætningen, når ældre opskriftstekster opdeles i trin.
 export function splitInstructionsIntoSteps(instructions: string): string[] {
-  return instructions
+  const fragments = instructions
     .split(/(?<=\.)\s+/)
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
+  const steps: string[] = [];
+  const abbreviation = /\b(?:pr|ca|fx|f\.eks|bl\.a|dvs|d\.v\.s|evt|hhv|inkl|ekskl|stk|tsk|spsk)\.$/i;
+  for (const fragment of fragments) {
+    const previous = steps.at(-1);
+    if (previous && abbreviation.test(previous)) {
+      steps[steps.length - 1] = `${previous} ${fragment}`;
+    } else {
+      steps.push(fragment);
+    }
+  }
+  return steps;
 }

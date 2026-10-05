@@ -1,0 +1,729 @@
+{
+  "status": "til_godkendelse",
+  "note": "Redaktionelle udkast til godkendelse, ikke importeret eller publiceret. Kontrolleret mod alle 32 opskrifter i livebasen den 6. september 2026. Næringsdata er beregnede overslag ud fra typiske råvareværdier, ikke verificerede varedeklarationer. Kulhydrat er tilgængeligt kulhydrat uden kostfibre. Retterne er ikke prøvetilberedt.",
+  "recipes": [
+    {
+      "slug": "ostevafler-uden-mel",
+      "title": "Ostevafler uden mel – sprøde keto-vafler",
+      "category": "morgen",
+      "servings": 2,
+      "prep_minutes": 25,
+      "description": "Lav sprøde ostevafler uden mel med æg og mozzarella. En enkel keto-morgenmad med fire ingredienser, klar på 25 minutter.",
+      "ingredients": [
+        {
+          "name": "æg",
+          "amount": 3,
+          "unit": "stk",
+          "grams": 150,
+          "nutrition_key": "egg"
+        },
+        {
+          "name": "mozzarella, fast og revet",
+          "amount": 100,
+          "unit": "g",
+          "grams": 100,
+          "nutrition_key": "mozzarella"
+        },
+        {
+          "name": "smør",
+          "amount": 5,
+          "unit": "g",
+          "grams": 5,
+          "nutrition_key": "butter"
+        },
+        {
+          "name": "sort peber",
+          "amount": 0.25,
+          "unit": "tsk",
+          "grams": 0.5,
+          "nutrition_key": "pepper"
+        }
+      ],
+      "steps": [
+        "Varm vaffeljernet op til middelhøj varme i 4-5 minutter, eller til det melder klar. Brug et almindeligt jern med plads til cirka en fjerdedel af dejen pr. vaffel.",
+        "Pisk æggene med peber i cirka 30 sekunder, til blommer og hvider er blandet. Vend den revne mozzarella i med en gaffel, så osten fordeles jævnt.",
+        "Pensl de varme plader med lidt af smørret. Fordel en fjerdedel af blandingen i jernet, hold den cirka 1 cm fra kanten, og luk forsigtigt. Bag i 3-4 minutter, til vaflen er gylden, og dampen er aftaget. Åbn først, når skorpen slipper pladerne; giv den ellers yderligere 30 sekunder.",
+        "Løft vaflen over på en rist, og gentag med resten af blandingen og smørret, så du får fire vafler. Lad hver vaffel ligge 2 minutter på risten, så overfladen bliver sprød. Server to vafler pr. person."
+      ],
+      "tips": "Brug fast mozzarella fra en blok eller pose. Frisk mozzarella i lage indeholder mere vand og giver blødere vafler, også når den er afdryppet.",
+      "image_alt": "Gyldne ostevafler uden mel med sprøde kanter",
+      "kcal": 272,
+      "carbs_g": 1.6,
+      "fat_g": 20,
+      "protein_g": 21.3
+    },
+    {
+      "slug": "omelet-champignon-gedeost",
+      "title": "Omelet med champignon og gedeost",
+      "category": "morgen",
+      "servings": 1,
+      "prep_minutes": 15,
+      "description": "Omelet med brunede champignon, blød gedeost og persille. Få en enkel morgenmad på 15 minutter med en fremgangsmåde, der holder omeletten saftig.",
+      "ingredients": [
+        {
+          "name": "æg",
+          "amount": 2,
+          "unit": "stk",
+          "grams": 100,
+          "nutrition_key": "egg"
+        },
+        {
+          "name": "champignon",
+          "amount": 100,
+          "unit": "g",
+          "grams": 100,
+          "nutrition_key": "mushroom"
+        },
+        {
+          "name": "gedeost, blød",
+          "amount": 30,
+          "unit": "g",
+          "grams": 30,
+          "nutrition_key": "goat"
+        },
+        {
+          "name": "smør",
+          "amount": 10,
+          "unit": "g",
+          "grams": 10,
+          "nutrition_key": "butter"
+        },
+        {
+          "name": "persille",
+          "amount": 3,
+          "unit": "g",
+          "grams": 3,
+          "nutrition_key": "parsley"
+        },
+        {
+          "name": "salt",
+          "amount": 0.5,
+          "unit": "g",
+          "grams": 0.5,
+          "nutrition_key": "salt"
+        },
+        {
+          "name": "sort peber",
+          "amount": 0.25,
+          "unit": "tsk",
+          "grams": 0.5,
+          "nutrition_key": "pepper"
+        }
+      ],
+      "steps": [
+        "Rens champignonerne, skær dem i 4 mm tykke skiver, og hak persillen. Pisk æggene med salt og peber i 20-30 sekunder, til blandingen er ensartet.",
+        "Varm en slip-let-pande på cirka 22 cm ved middelhøj varme. Smelt halvdelen af smørret, og steg champignonerne i 5-6 minutter. Vend dem et par gange, til væsken er fordampet, og skiverne har brune kanter. Læg dem på en tallerken.",
+        "Skru ned til middellav varme, og smelt resten af smørret på panden. Hæld æggene på. Træk forsigtigt de stivnede kanter ind mod midten med en spatel, og vip panden, så flydende æg løber ud til kanten. Fortsæt i 1-2 minutter.",
+        "Fordel champignon og smuldret gedeost på den ene halvdel, når bunden er samlet, og overfladen stadig er let blank. Fold den anden halvdel over fyldet. Steg videre i 1-2 minutter ved lav varme, til der ikke løber flydende æg ud. Drys med persille, og server straks."
+      ],
+      "tips": "Lad champignonerne ligge i ét lag under stegningen. På en overfyldt pande koger de i deres egen væske, og fyldet får mindre smag.",
+      "image_alt": "Foldet omelet med brunede champignon, gedeost og persille",
+      "kcal": 323,
+      "carbs_g": 1.8,
+      "fat_g": 25,
+      "protein_g": 21
+    },
+    {
+      "slug": "varm-kokosgroed-chia-kardemomme",
+      "title": "Varm kokosgrød med chia og kardemomme",
+      "category": "morgen",
+      "servings": 1,
+      "prep_minutes": 15,
+      "description": "Varm kokosgrød med chia, kokosmel og kardemomme. En morgenmad uden havregryn, der bliver cremet i gryden og er klar på 15 minutter.",
+      "ingredients": [
+        {
+          "name": "kokosmælk, 18 % fedt",
+          "amount": 100,
+          "unit": "ml",
+          "grams": 100,
+          "nutrition_key": "coconutmilk"
+        },
+        {
+          "name": "vand",
+          "amount": 100,
+          "unit": "ml",
+          "grams": 100,
+          "nutrition_key": "water"
+        },
+        {
+          "name": "chiafrø",
+          "amount": 20,
+          "unit": "g",
+          "grams": 20,
+          "nutrition_key": "chia"
+        },
+        {
+          "name": "kokosmel, almindelig revet kokos",
+          "amount": 15,
+          "unit": "g",
+          "grams": 15,
+          "nutrition_key": "coconut"
+        },
+        {
+          "name": "græsk yoghurt, 10 %",
+          "amount": 40,
+          "unit": "g",
+          "grams": 40,
+          "nutrition_key": "yogurt"
+        },
+        {
+          "name": "kardemomme, stødt",
+          "amount": 0.25,
+          "unit": "tsk",
+          "grams": 0.5,
+          "nutrition_key": "cardamom"
+        },
+        {
+          "name": "salt",
+          "amount": 0.2,
+          "unit": "g",
+          "grams": 0.2,
+          "nutrition_key": "salt"
+        }
+      ],
+      "steps": [
+        "Ryst kokosmælken, og mål 100 ml af. Pisk kokosmælk, vand, chiafrø, revet kokos, kardemomme og salt sammen i en lille gryde i cirka 30 sekunder, så der ikke ligger tørre frø langs kanten.",
+        "Varm blandingen op ved middelvarme i 3-4 minutter under jævnlig omrøring, til der kommer små bobler ved kanten. Skru ned til lav varme.",
+        "Lad grøden småsimre i 5-6 minutter. Rør langs grydens bund cirka hvert halve minut, så kokos og frø ikke sætter sig fast. Grøden er klar, når den er tyk, men stadig langsomt flyder sammen efter skeen.",
+        "Tag gryden af varmen, og lad grøden hvile i 2 minutter, mens chiafrøene binder den sidste væske. Hæld i en skål, og læg yoghurten som en blød klat ovenpå."
+      ],
+      "tips": "Brug almindelig revet kokos, som ofte hedder kokosmel i danske butikker. Affedtet kokosfibermel suger langt mere væske og kan ikke erstattes gram for gram.",
+      "image_alt": "Varm kokosgrød med synlige chiafrø og en skefuld yoghurt",
+      "kcal": 423,
+      "carbs_g": 5.8,
+      "fat_g": 38,
+      "protein_g": 9.2
+    },
+    {
+      "slug": "spidskaalswraps-roeget-laks",
+      "title": "Spidskålswraps med røget laks og flødeost",
+      "category": "frokost",
+      "servings": 2,
+      "prep_minutes": 20,
+      "description": "Spidskålswraps med røget laks, flødeost, agurk og dild. Få nemme wraps uden tortilla og en metode, der gør kålbladene lette at rulle.",
+      "ingredients": [
+        {
+          "name": "spidskål, fire store hele blade",
+          "amount": 160,
+          "unit": "g",
+          "grams": 160,
+          "nutrition_key": "cabbage"
+        },
+        {
+          "name": "røget laks",
+          "amount": 160,
+          "unit": "g",
+          "grams": 160,
+          "nutrition_key": "salmon"
+        },
+        {
+          "name": "flødeost, naturel",
+          "amount": 80,
+          "unit": "g",
+          "grams": 80,
+          "nutrition_key": "creamcheese"
+        },
+        {
+          "name": "agurk",
+          "amount": 100,
+          "unit": "g",
+          "grams": 100,
+          "nutrition_key": "cucumber"
+        },
+        {
+          "name": "citronsaft",
+          "amount": 10,
+          "unit": "ml",
+          "grams": 10,
+          "nutrition_key": "lemon"
+        },
+        {
+          "name": "dild",
+          "amount": 5,
+          "unit": "g",
+          "grams": 5,
+          "nutrition_key": "dill"
+        },
+        {
+          "name": "sort peber",
+          "amount": 0.25,
+          "unit": "tsk",
+          "grams": 0.5,
+          "nutrition_key": "pepper"
+        }
+      ],
+      "steps": [
+        "Bring en gryde vand i kog, og gør en skål koldt vand klar. Skær den tykke ribbe på hvert kålblad flad med en lille kniv uden at skære hul i bladet.",
+        "Læg bladene i det kogende vand to ad gangen i 45-60 sekunder, til de kan bøjes uden at knække. Flyt dem straks til det kolde vand i 1 minut. Dup dem grundigt tørre på et rent viskestykke.",
+        "Hak dilden, og rør den med flødeost, citronsaft og peber i cirka 30 sekunder til en ensartet creme. Skær agurken i tynde stave på cirka 8 cm, og dup dem tørre.",
+        "Fordel cremen på kålbladene med 2 cm fri kant. Læg laks og agurk midt på. Fold siderne ind, og rul tæt fra den nederste kant. Læg rullerne med samlingen nedad, halver dem med en skarp kniv, og server to wraps pr. person."
+      ],
+      "tips": "Til madpakken kan du pakke hver rulle stramt i madpapir og først skære den over ved spisetid; det hjælper den med at holde formen.",
+      "image_alt": "Spidskålswraps skåret over med røget laks, flødeost og agurk",
+      "kcal": 272,
+      "carbs_g": 6,
+      "fat_g": 17.5,
+      "protein_g": 21.3
+    },
+    {
+      "slug": "halloumisalat-aubergine-tahin",
+      "title": "Halloumisalat med aubergine og tahindressing",
+      "category": "frokost",
+      "servings": 2,
+      "prep_minutes": 35,
+      "description": "Halloumisalat med ovnbagt aubergine, sprød romaine og cremet tahindressing. En lun vegetarisk frokost, der er klar på 35 minutter.",
+      "ingredients": [
+        {
+          "name": "halloumi",
+          "amount": 200,
+          "unit": "g",
+          "grams": 200,
+          "nutrition_key": "halloumi"
+        },
+        {
+          "name": "aubergine",
+          "amount": 250,
+          "unit": "g",
+          "grams": 250,
+          "nutrition_key": "aubergine"
+        },
+        {
+          "name": "romainesalat",
+          "amount": 100,
+          "unit": "g",
+          "grams": 100,
+          "nutrition_key": "romaine"
+        },
+        {
+          "name": "olivenolie",
+          "amount": 15,
+          "unit": "g",
+          "grams": 15,
+          "nutrition_key": "oil"
+        },
+        {
+          "name": "tahin, uden tilsat sukker",
+          "amount": 20,
+          "unit": "g",
+          "grams": 20,
+          "nutrition_key": "tahini"
+        },
+        {
+          "name": "citronsaft",
+          "amount": 15,
+          "unit": "ml",
+          "grams": 15,
+          "nutrition_key": "lemon"
+        },
+        {
+          "name": "vand",
+          "amount": 20,
+          "unit": "ml",
+          "grams": 20,
+          "nutrition_key": "water"
+        },
+        {
+          "name": "sort peber",
+          "amount": 0.25,
+          "unit": "tsk",
+          "grams": 0.5,
+          "nutrition_key": "pepper"
+        }
+      ],
+      "steps": [
+        "Tænd ovnen på 220 °C varmluft. Skær auberginen i tern på 2 cm. Vend dem grundigt med olivenolie og peber, og fordel dem i ét lag på en bageplade med bagepapir.",
+        "Bag auberginen i 20-23 minutter, fra ovnen er varm. Vend ternene efter 12 minutter. De er klar, når kanterne er gyldne, og midten giver let efter for en gaffel.",
+        "Rør imens tahin og citronsaft sammen. Pisk vandet i lidt ad gangen i cirka 1 minut, til dressingen er glat og kan hældes i en tynd stråle. Skyl salaten, tør den, og riv den i mundrette stykker.",
+        "Skær halloumien i 1 cm tykke skiver, og dup dem tørre. Varm en slip-let-pande ved middelhøj varme i 1 minut. Steg skiverne på den tørre pande i cirka 2 minutter på hver side, til de har en gylden skorpe.",
+        "Fordel romaine og lune auberginetern på to tallerkener. Læg halloumi ovenpå, og fordel dressingen. Server straks, mens osten stadig er blød indeni."
+      ],
+      "tips": "Vælg halloumi med vegetabilsk eller mikrobiel osteløbe, hvis retten skal være vegetarisk; osteløben fremgår normalt af ingredienslisten.",
+      "image_alt": "Halloumisalat med gyldne auberginetern, romaine og tahindressing",
+      "kcal": 495,
+      "carbs_g": 6.3,
+      "fat_g": 38.8,
+      "protein_g": 26.2
+    },
+    {
+      "slug": "svinekoteletter-sennepssauce-spidskaal",
+      "title": "Svinekoteletter i sennepssauce med spidskål",
+      "category": "aften",
+      "servings": 2,
+      "prep_minutes": 30,
+      "description": "Saftige svinekoteletter i cremet sennepssauce med stegt spidskål. En nem aftensmad på 30 minutter med tydelige trin til både kød og sauce.",
+      "ingredients": [
+        {
+          "name": "svinekoteletter uden ben, cirka 2 cm tykke",
+          "amount": 300,
+          "unit": "g",
+          "grams": 300,
+          "nutrition_key": "pork"
+        },
+        {
+          "name": "spidskål",
+          "amount": 300,
+          "unit": "g",
+          "grams": 300,
+          "nutrition_key": "cabbage"
+        },
+        {
+          "name": "piskefløde, 38 %",
+          "amount": 100,
+          "unit": "ml",
+          "grams": 100,
+          "nutrition_key": "cream"
+        },
+        {
+          "name": "dijonsennep",
+          "amount": 15,
+          "unit": "g",
+          "grams": 15,
+          "nutrition_key": "mustard"
+        },
+        {
+          "name": "smør",
+          "amount": 15,
+          "unit": "g",
+          "grams": 15,
+          "nutrition_key": "butter"
+        },
+        {
+          "name": "vand",
+          "amount": 50,
+          "unit": "ml",
+          "grams": 50,
+          "nutrition_key": "water"
+        },
+        {
+          "name": "timian, tørret",
+          "amount": 0.5,
+          "unit": "tsk",
+          "grams": 0.5,
+          "nutrition_key": "thyme"
+        },
+        {
+          "name": "salt",
+          "amount": 1,
+          "unit": "g",
+          "grams": 1,
+          "nutrition_key": "salt"
+        },
+        {
+          "name": "sort peber",
+          "amount": 0.25,
+          "unit": "tsk",
+          "grams": 0.5,
+          "nutrition_key": "pepper"
+        }
+      ],
+      "steps": [
+        "Skær spidskålen i strimler på cirka 1 cm. Dup koteletterne tørre, og krydr dem på begge sider med halvdelen af saltet og peberet.",
+        "Smelt 10 g smør på en stor pande ved middelhøj varme. Steg kålen i 7-9 minutter, og vend den jævnligt, til den er mør med let brunede kanter. Krydr med resten af saltet og peberet. Fordel på to tallerkener, og hold dem lune.",
+        "Smelt de sidste 5 g smør på samme pande ved middelhøj varme. Brun koteletterne i 2 minutter på hver side, til de har stegeskorpe. Læg dem på en ren tallerken; de skal stege færdige i saucen.",
+        "Skru ned til middelvarme, hæld vandet på panden, og skrab stegesmagen fri med en træske i 30 sekunder. Rør fløde, sennep og timian i, og bring saucen i rolig simren.",
+        "Læg koteletterne og deres kødsaft i saucen. Lad dem simre ved lav varme i 5-8 minutter, og vend dem halvvejs. Mål i det tykkeste sted; kødet skal nå 70 °C. Giv det lidt længere tid ved behov. Saucen skal hænge let ved en ske. Lad kødet hvile i saucen uden varme i 3 minutter, og server med kålen."
+      ],
+      "tips": "Sennep varierer meget i styrke. Brug en mild dijonsennep, hvis du ønsker en rund sauce; grov sennep kan bruges i samme mængde og giver mere struktur.",
+      "image_alt": "Svinekotelet i cremet sennepssauce med stegt spidskål",
+      "kcal": 531,
+      "carbs_g": 7.8,
+      "fat_g": 38.3,
+      "protein_g": 36.9
+    },
+    {
+      "slug": "fyldte-squash-oksekoed-mozzarella",
+      "title": "Fyldte squash med oksekød og mozzarella",
+      "category": "aften",
+      "servings": 2,
+      "prep_minutes": 45,
+      "description": "Fyldte squash med krydret oksekød, tomat og gylden mozzarella. En ovnret uden ris med konkrete trin, så fyldet bliver saftigt uden at soppe.",
+      "ingredients": [
+        {
+          "name": "squash, to mellemstore",
+          "amount": 500,
+          "unit": "g",
+          "grams": 500,
+          "nutrition_key": "zucchini"
+        },
+        {
+          "name": "hakket oksekød, 8-12 % fedt",
+          "amount": 300,
+          "unit": "g",
+          "grams": 300,
+          "nutrition_key": "beef"
+        },
+        {
+          "name": "hakkede tomater på dåse",
+          "amount": 150,
+          "unit": "g",
+          "grams": 150,
+          "nutrition_key": "tomato"
+        },
+        {
+          "name": "mozzarella, fast og revet",
+          "amount": 80,
+          "unit": "g",
+          "grams": 80,
+          "nutrition_key": "mozzarella"
+        },
+        {
+          "name": "olivenolie",
+          "amount": 10,
+          "unit": "g",
+          "grams": 10,
+          "nutrition_key": "oil"
+        },
+        {
+          "name": "hvidløg",
+          "amount": 1,
+          "unit": "fed",
+          "grams": 3,
+          "nutrition_key": "garlic"
+        },
+        {
+          "name": "oregano, tørret",
+          "amount": 1,
+          "unit": "tsk",
+          "grams": 1,
+          "nutrition_key": "oregano"
+        },
+        {
+          "name": "salt",
+          "amount": 1,
+          "unit": "g",
+          "grams": 1,
+          "nutrition_key": "salt"
+        },
+        {
+          "name": "sort peber",
+          "amount": 0.25,
+          "unit": "tsk",
+          "grams": 0.5,
+          "nutrition_key": "pepper"
+        }
+      ],
+      "steps": [
+        "Tænd ovnen på 200 °C varmluft. Halver squashene på langs. Skrab indmaden ud med en teske, så der er cirka 1 cm kød tilbage langs skallen. Hak al indmaden fint, og gem den til fyldet.",
+        "Pensl de fire squashskaller med halvdelen af olien, og læg dem med åbningen opad i et ovnfast fad. Forbag i 10 minutter, fra ovnen er varm, så de begynder at blive møre.",
+        "Varm imens resten af olien på en stor pande ved middelhøj varme. Brun oksekødet i 5-6 minutter, mens du deler det i små stykker med en spatel, til det har fået brune pletter. Tilsæt den hakkede squashindmad, og steg i 4-5 minutter, til det meste af væsken er fordampet.",
+        "Hak hvidløget fint, og rør det i sammen med oregano, salt og peber i 30 sekunder. Tilsæt tomaterne, og lad fyldet simre uden låg ved middelvarme i 6-8 minutter. Rør jævnligt; fyldet skal være fugtigt og samlet uden en pøl af tomatvæske i bunden.",
+        "Hæld forsigtigt eventuel væske ud af de forbagte squash. Fordel kødfyldet i skallerne, og drys mozzarella over. Bag videre i 12-15 minutter, til osten er gylden, og squashkødet er mørt, når du stikker i det med en lille kniv. Lad retten hvile i 3 minutter, og server to halve squash pr. person."
+      ],
+      "tips": "Vælg to squash med omtrent samme tykkelse. Så bliver skallerne møre samtidig, og fyldet er lettere at fordele jævnt.",
+      "image_alt": "Ovnbagte squash fyldt med oksekød og tomat under gylden mozzarella",
+      "kcal": 494,
+      "carbs_g": 9.6,
+      "fat_g": 29.7,
+      "protein_g": 45.1
+    }
+  ],
+  "nutrition_basis": {
+    "note": "Typiske, afrundede beregningsantagelser pr. 100 g i rækkefølgen kcal, tilgængeligt kulhydrat, fedt, protein. Er ikke verificerede varedeklarationer; endelige mærkevarer kan ændre tallene. Æg er regnet som 50 g spiselig del pr. stk. Ml er tilnærmet som g i disse små portioner.",
+    "values": {
+      "egg": [
+        137,
+        0.7,
+        9.3,
+        12.3
+      ],
+      "mozzarella": [
+        300,
+        2,
+        22,
+        24
+      ],
+      "butter": [
+        744,
+        0.6,
+        82,
+        0.7
+      ],
+      "pepper": [
+        251,
+        39,
+        3.3,
+        10.4
+      ],
+      "mushroom": [
+        22,
+        0.5,
+        0.3,
+        3.1
+      ],
+      "goat": [
+        290,
+        1,
+        24,
+        18
+      ],
+      "parsley": [
+        36,
+        3,
+        0.8,
+        3
+      ],
+      "salt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "coconutmilk": [
+        180,
+        2,
+        18,
+        1.5
+      ],
+      "water": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "chia": [
+        450,
+        5,
+        31,
+        21
+      ],
+      "coconut": [
+        660,
+        7,
+        65,
+        7
+      ],
+      "yogurt": [
+        130,
+        3.8,
+        10,
+        6
+      ],
+      "cardamom": [
+        311,
+        40,
+        7,
+        11
+      ],
+      "cabbage": [
+        27,
+        4,
+        0.2,
+        1.5
+      ],
+      "salmon": [
+        180,
+        0,
+        10,
+        22
+      ],
+      "creamcheese": [
+        245,
+        4,
+        23,
+        5
+      ],
+      "cucumber": [
+        12,
+        1.8,
+        0.1,
+        0.7
+      ],
+      "lemon": [
+        22,
+        2.5,
+        0.2,
+        0.4
+      ],
+      "dill": [
+        43,
+        4.9,
+        1.1,
+        3.5
+      ],
+      "halloumi": [
+        320,
+        2,
+        25,
+        22
+      ],
+      "aubergine": [
+        25,
+        2.5,
+        0.2,
+        1
+      ],
+      "romaine": [
+        17,
+        1.2,
+        0.3,
+        1.2
+      ],
+      "oil": [
+        900,
+        0,
+        100,
+        0
+      ],
+      "tahini": [
+        650,
+        3,
+        59,
+        23
+      ],
+      "pork": [
+        160,
+        0,
+        8,
+        22
+      ],
+      "cream": [
+        365,
+        2.8,
+        38,
+        2.1
+      ],
+      "mustard": [
+        150,
+        3,
+        11,
+        7
+      ],
+      "thyme": [
+        276,
+        27,
+        7,
+        9
+      ],
+      "zucchini": [
+        17,
+        2.2,
+        0.3,
+        1.2
+      ],
+      "beef": [
+        176,
+        0,
+        10,
+        21
+      ],
+      "tomato": [
+        24,
+        3.5,
+        0.2,
+        1.1
+      ],
+      "garlic": [
+        149,
+        28,
+        0.5,
+        6.4
+      ],
+      "oregano": [
+        265,
+        27,
+        4.3,
+        9
+      ]
+    }
+  }
+}

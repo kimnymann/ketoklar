@@ -1,5 +1,7 @@
 ---
 import '../styles/global.css';
+import '../styles/print.css';
+import PrintTools from '../components/PrintTools.astro';
 import BrandMark from '../components/BrandMark.astro';
 import CookieNotice from '../components/CookieNotice.astro';
 import '@fontsource-variable/dm-sans';
@@ -9,6 +11,7 @@ import { SITE_URL, absoluteUrl } from '../lib/seo';
 
 interface Props {
   title: string;
+  printable?: boolean;
   description?: string;
   wide?: boolean;
   image?: string | null;
@@ -19,6 +22,7 @@ interface Props {
 
 const {
   title,
+  printable = false,
   description = 'Keto-opskrifter, viden og historier for mennesker, der godt kan lide rigtig mad.',
   wide = false,
   image,
@@ -89,7 +93,7 @@ const today = new Intl.DateTimeFormat('da-DK', {
     <script type="application/ld+json" is:inline set:html={jsonLd}></script>
     <title>{pageTitle}</title>
   </head>
-  <body>
+  <body data-printable={printable || undefined}>
     <div class="edition-bar">
       <div class="site-frame edition-bar__inner">
         <span>Danmarks sultneste ketomagasin</span>
@@ -109,7 +113,23 @@ const today = new Intl.DateTimeFormat('da-DK', {
       </div>
     </header>
     <main class:list={["page-main", { "page-main--wide": wide }] }>
-      <slot />
+      {printable ? (
+        <>
+          <PrintTools />
+          <table class="print-document" role="presentation">
+            <thead class="print-document__head">
+              <tr><td>
+                <div class="print-source">
+                  <strong>Ketoklar</strong>
+                  <span>Opskrifter, viden og historier · ketoklar.dk</span>
+                  <small>{canonicalUrl}</small>
+                </div>
+              </td></tr>
+            </thead>
+            <tbody class="print-document__body"><tr><td><slot /></td></tr></tbody>
+          </table>
+        </>
+      ) : <slot />}
     </main>
     <footer class="site-footer">
       <div class="site-frame site-footer__top">

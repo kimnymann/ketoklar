@@ -1,0 +1,45 @@
+.print-document, .print-document__body, .print-document__body > tr, .print-document__body > tr > td { display: contents; }
+.print-document__head { display: none; }
+@media print {
+  @page { size: auto; margin: 16mm; }
+  html:has(body[data-printable]), body[data-printable] { background: white !important; color: #111 !important; }
+  body[data-printable] { font-size: 11pt; line-height: 1.5; }
+  body[data-printable]::before, body[data-printable]::after,
+  body[data-printable] :is(.edition-bar, .site-header, .site-footer, #cookie-notice, .print-tools, .no-print, .recipe-rating, .article-author, .article-contents, .anecdote-story__back, .anecdote-story__meta, .story-recipes, .next-anecdote, .inline-recipe) { display: none !important; }
+  body[data-printable] .page-main { width: 100% !important; max-width: none !important; padding: 0 !important; margin: 0 !important; }
+  body[data-printable] .page-main * { color: #111 !important; background: transparent !important; box-shadow: none !important; text-shadow: none !important; animation: none !important; transition: none !important; }
+  /* The browser repeats the table header and reserves space in the page flow.
+     No fixed positioning or negative offsets: those can overlap paginated text. */
+  body[data-printable] .print-document { display: table; width: 100%; table-layout: fixed; border-collapse: collapse; }
+  body[data-printable] .print-document__head { display: table-header-group; break-inside: avoid; }
+  body[data-printable] .print-document__body { display: table-row-group; }
+  body[data-printable] .print-document > :is(thead, tbody) > tr { display: table-row; break-inside: auto; }
+  body[data-printable] .print-document > :is(thead, tbody) > tr > td { display: table-cell; padding: 0; vertical-align: top; break-inside: auto; }
+  body[data-printable] .print-document > .print-document__head > tr > td { padding-bottom: 7mm; }
+  body[data-printable] .print-source { display: block !important; position: static; border-bottom: 1pt solid #333; padding-bottom: 2mm; margin: 0; break-inside: avoid; }
+  body[data-printable] .print-source strong { display: block; font-size: 18pt; line-height: 1.2; font-family: var(--font-display); }
+  body[data-printable] .print-source span { display: block; font-size: 9pt; }
+  body[data-printable] .print-source small { display: block; font-size: 7pt; line-height: 1.3; overflow-wrap: anywhere; }
+  body[data-printable] h1 { max-width: none !important; font-size: 24pt !important; line-height: 1.15 !important; letter-spacing: normal !important; margin: 4mm 0 !important; }
+  body[data-printable] h2 { font-size: 16pt !important; margin: 6mm 0 3mm !important; }
+  body[data-printable] :is(h1, h2, h3, h4) { break-after: avoid; }
+  body[data-printable] :is(p, li) { orphans: 3; widows: 3; }
+  body[data-printable] :is(img, figure) { break-inside: avoid; }
+  body[data-printable] .page-main img { display: block; max-width: 100% !important; width: auto !important; height: auto !important; max-height: 75mm !important; aspect-ratio: auto !important; object-fit: contain !important; margin: 4mm auto !important; transform: none !important; border-radius: 0 !important; }
+  body[data-printable] [data-reveal] { opacity: 1 !important; transform: none !important; visibility: visible !important; }
+  body[data-printable] .recipe-directions { display: block !important; }
+  body[data-printable] .page-main div[class*="aspect-"] { aspect-ratio: auto !important; min-height: 0 !important; }
+  body[data-printable] .recipe-directions > div { margin-bottom: 5mm; }
+  body[data-printable] .recipe-directions li { break-inside: avoid; }
+  body[data-printable] .recipe-directions li > span:first-child { border: 1px solid #777; }
+  body[data-printable] :is(.anecdote-story__hero, .anecdote-story__image, .anecdote-story__heading) { display: block !important; min-height: 0 !important; height: auto !important; padding: 0 !important; overflow: visible !important; }
+  body[data-printable] .anecdote-copy { max-width: none; margin: 5mm 0 0; font-size: 11pt; line-height: 1.5; }
+  body[data-printable] .anecdote-copy > p:first-child::first-letter { float: none; font-size: inherit; margin: 0; line-height: inherit; }
+  body[data-printable] blockquote { width: auto !important; margin: 4mm 0 !important; padding: 3mm !important; transform: none !important; }
+  body[data-printable] blockquote p { font-size: 13pt !important; line-height: 1.5 !important; }
+  body[data-printable] blockquote > span[aria-hidden] { display: none; }
+  body[data-printable] .foodlist-widget { overflow: visible; }
+  body[data-printable] .foodlist-widget > .flex { display: none !important; }
+  body[data-printable] .foodlist-widget .foodlist-panel { display: block !important; padding: 3mm 0; }
+  body[data-printable] .foodlist-panel::before { content: attr(data-print-label); display: block; font-weight: bold; font-size: 13pt; }
+}

@@ -21,24 +21,29 @@ function fixture(failures = {}, track = 'article', publishedToday = 0) {
     return {
       bind(...values) { bindings = values; return this; },
       async first() {
-        return { count: sql.includes("date('now')") ? publishedToday : rows.length - published.length };
+        return { count: sql.includes('published_at >= ?') ? publishedToday : rows.length - published.length };
       },
       async all() {
         assert.ok(sql.includes(track === 'anecdote' ? "category = 'anekdote'" : "category IN ('videnskab','livsstil')"));
         return { results: sql.includes('LIMIT ?') ? rows.slice(0, bindings[0]) : rows };
       },
-      async run() { published.push(bindings[0]); publishedToday++; },
+      async run() {
+        assert.ok(sql.includes('AND NOT EXISTS'));
+        if (publishedToday) return { meta: { changes: 0 } };
+        published.push(bindings[0]); publishedToday++;
+        return { meta: { changes: 1 } };
+      },
     };
   } } };
   const publish = runInNewContext(`${functions}\npublishArticleTrack`, {
     LOW_ARTICLE_QUEUE_THRESHOLD: 2,
-    async ensureArticleImage(_env, article) {
+    danishClock:()=>({day:'2026-09-28'}),dayBounds:d=>d,nextDay:()=> '2026-09-29',
+    async articleImageReadiness(_env, article) {
       reviewed.push(article.id);
-      return { ok: failures[article.id] !== 'hero', error: 'Rejected' };
+      return { ready: !failures[article.id] };
     },
-    async ensureArticleBodyImages(_env, article) {
-      return failures[article.id] === 'body' ? [{ ok: false, marker: 'body', error: 'Rejected' }] : [];
-    },
+    async ensureArticleImage() { throw Error('Publication must not generate'); },
+    async ensureArticleBodyImages() { throw Error('Publication must not generate'); },
   });
   return { run: () => publish(env, 1, track), published, reviewed };
 }

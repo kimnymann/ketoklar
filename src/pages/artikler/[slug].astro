@@ -6,7 +6,10 @@ import { parseArticleBody } from '../../lib/articleBody';
 import { KETO_FOOD_LIST } from '../../lib/ketoFoodList';
 import AnecdoteArticle from '../../components/AnecdoteArticle.astro';
 import ArticleAuthor from '../../components/ArticleAuthor.astro';
-import { absoluteUrl, breadcrumbJsonLd, toIsoDateTime } from '../../lib/seo';
+import ArticleShoppingList from '../../components/ArticleShoppingList.astro';
+import ArticleMealCards from '../../components/ArticleMealCards.astro';
+import { enhanceArticleBlocks } from '../../lib/articleEnhancements';
+import { absoluteUrl, articleDates, breadcrumbJsonLd, toIsoDateTime } from '../../lib/seo';
 import { env } from "cloudflare:workers";
 
 const { slug } = Astro.params;
@@ -42,7 +45,7 @@ let articleImageCount = 0;
 // TODO fase 2: erstat med rigtigt abonnements-tjek (session/cookie)
 const isSubscriber = false;
 const isLocked = article.locked === 1 && !isSubscriber;
-const blocks = isLocked ? [] : parseArticleBody(article.body);
+const blocks = isLocked ? [] : enhanceArticleBlocks(article.slug, parseArticleBody(article.body));
 const contents = blocks.flatMap((block, index) => block.type === 'heading'
   ? [{ text: block.text, id: `afsnit-${index}`, index }] : []);
 const contentsStart = contents[0]?.index;
@@ -66,14 +69,15 @@ if (article.category === 'anekdote') {
 
 const articleDescription = article.excerpt ?? `${article.title} – læs artiklen på Ketoklar.`;
 const articleUrl = absoluteUrl(`/artikler/${article.slug}`);
+const dates = articleDates(article.published_at, article.updated_at);
 const articleStructuredData = {
   '@type': 'BlogPosting',
   '@id': `${articleUrl}#article`,
   headline: article.title,
   description: articleDescription,
   ...(article.image_url ? { image: [absoluteUrl(article.image_url)] } : {}),
-  ...(toIsoDateTime(article.published_at) ? { datePublished: toIsoDateTime(article.published_at) } : {}),
-  ...(toIsoDateTime(article.updated_at ?? null) ? { dateModified: toIsoDateTime(article.updated_at ?? null) } : {}),
+  ...(dates.published ? { datePublished: dates.published } : {}),
+  ...(dates.modified ? { dateModified: dates.modified } : {}),
   mainEntityOfPage: articleUrl,
   inLanguage: 'da-DK',
   publisher: { '@id': 'https://ketoklar.dk/#organization' },
@@ -89,6 +93,7 @@ const articleStructuredData = {
 ---
 
 <Layout
+  printable={!isLocked}
   title={article.title}
   description={articleDescription}
   image={article.image_url}
@@ -136,9 +141,9 @@ const articleStructuredData = {
   )}
 
   <ArticleAuthor />
-  {article.updated_at && (
+  {dates.modified && (
     <p class="max-w-3xl mx-auto mb-6 text-sm text-[var(--sage)]">
-      Senest opdateret <time datetime={toIsoDateTime(article.updated_at)}>{formatPublishedDate(article.updated_at)}</time>
+      Senest opdateret <time datetime={dates.modified}>{formatPublishedDate(dates.modified)}</time>
     </p>
   )}
 
@@ -153,6 +158,8 @@ const articleStructuredData = {
   ) : (
     <div class="max-w-3xl mx-auto leading-relaxed space-y-5" style="color: var(--ink);">
       {blocks.map((block, index) => {
+        if (block.type === 'shoppingChecklist') return <ArticleShoppingList items={block.items} />;
+        if (block.type === 'mealCards') return <ArticleMealCards items={block.items} kind={block.kind} />;
         if (block.type === 'heading') {
           return <>
             {index === contentsStart && contents.length >= 3 && (
@@ -184,7 +191,7 @@ const articleStructuredData = {
           const r = recipesBySlug.get(block.slug);
           if (!r) return null;
           return (
-            <a href={`/opskrifter/${r.slug}`} class="not-prose flex items-center gap-4 bg-[var(--card)] border border-[var(--ink)]/15 rounded-2xl p-4 hover:shadow-md transition my-2">
+            <a href={`/opskrifter/${r.slug}`} class="no-print not-prose flex items-center gap-4 bg-[var(--card)] border border-[var(--ink)]/15 rounded-2xl p-4 hover:shadow-md transition my-2">
               {r.image_url ? (
                 <img src={r.image_url} alt={r.title} class="w-16 h-16 flex-shrink-0 rounded-lg object-cover" loading="lazy" />
               ) : (
@@ -233,7 +240,7 @@ const articleStructuredData = {
                 ))}
               </div>
               {KETO_FOOD_LIST.map((cat) => (
-                <div class="foodlist-panel p-5">
+                <div class="foodlist-panel p-5" data-print-label={cat.label}>
                   <div class="space-y-4">
                     {cat.groups.map((g) => (
                       <div>
@@ -257,7 +264,7 @@ const articleStructuredData = {
   )}
 
   {relatedRecipes.length > 0 && (
-    <div class="max-w-3xl mx-auto mt-14 pt-8 border-t border-[var(--ink)]/15">
+    <div class="no-print max-w-3xl mx-auto mt-14 pt-8 border-t border-[var(--ink)]/15">
       <h2 class="text-xl font-display font-600 mb-4">Alle opskrifter nævnt i denne artikel</h2>
       <div class="grid sm:grid-cols-3 gap-4">
         {relatedRecipes.map((r) => (

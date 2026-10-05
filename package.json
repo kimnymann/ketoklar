@@ -10,7 +10,10 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "generate-types": "wrangler types"
+    "generate-types": "wrangler types",
+    "test": "node --test tests/*.test.mjs workers/publisher/tests/*.test.mjs",
+    "check": "npm run generate-types && astro check && tsc --noEmit -p workers/publisher/tsconfig.json",
+    "db:setup:local": "node scripts/setup-local-db.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.2.6",
@@ -23,5 +26,10 @@
   },
   "allowScripts": {
     "esbuild": true
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.6.4",
+    "typescript": "^6.0.3"
   }
 }

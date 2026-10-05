@@ -67,7 +67,7 @@ const recipeStructuredData = {
   recipeYield: `${recipe.servings} portioner`,
   ...(recipe.prep_minutes ? { totalTime: `PT${recipe.prep_minutes}M` } : {}),
   recipeIngredient: ingredients.map((ingredient) =>
-    `${ingredient.amount > 0 ? `${ingredient.amount}${ingredient.unit ? ` ${ingredient.unit}` : ''} ` : ''}${ingredient.name}`
+    `${ingredient.amount > 0 ? `${String(ingredient.amount).replace('.', ',')}${ingredient.unit ? ` ${ingredient.unit}` : ''} ` : ''}${ingredient.name}`
   ),
   recipeInstructions: steps.map((step, index) => ({
     '@type': 'HowToStep',
@@ -95,6 +95,7 @@ const recipeStructuredData = {
 ---
 
 <Layout
+  printable={!isLocked}
   title={recipe.title}
   description={recipeDescription}
   image={recipe.image_url}
@@ -132,7 +133,7 @@ const recipeStructuredData = {
       </a>
     </div>
   ) : (
-    <div class="grid md:grid-cols-3 gap-10">
+    <div class="recipe-directions grid md:grid-cols-3 gap-10">
       <div>
         <h2 class="text-xl font-display font-600 mb-4">Ingredienser</h2>
         <div class="space-y-5">
@@ -143,7 +144,7 @@ const recipeStructuredData = {
                 {group.items.map((i) => (
                   <li class="flex items-baseline gap-2">
                     <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 mb-0.5" style="background-color: var(--sage);"></span>
-                    <span>{i.amount > 0 ? `${i.amount}${i.unit ? ' ' + i.unit : ''} ` : ''}{i.name}</span>
+                    <span>{i.amount > 0 ? `${String(i.amount).replace('.', ',')}${i.unit ? ' ' + i.unit : ''} ` : ''}{i.name}</span>
                   </li>
                 ))}
               </ul>
@@ -190,7 +191,7 @@ const recipeStructuredData = {
   )}
 
   {relatedArticles.length > 0 && (
-    <div class="mt-14 pt-8 border-t border-[var(--ink)]/15">
+    <div class="no-print mt-14 pt-8 border-t border-[var(--ink)]/15">
       <h2 class="text-xl font-display font-600 mb-4">Læs mere</h2>
       <div class="flex flex-wrap gap-4">
         {relatedArticles.map((a) => (

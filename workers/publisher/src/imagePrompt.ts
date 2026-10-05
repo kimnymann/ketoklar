@@ -6,12 +6,12 @@ const CORE_STYLE =
   'shallow depth of field, no text, no watermark, no people, no hands';
 
 const SCENE_VARIANTS = [
-  'dark charcoal slate surface, matte black ceramic plate, moody side lighting',
-  'light rustic oak table, cream stoneware bowl, soft natural daylight',
-  'dark aged wood table, brushed copper plate, warm afternoon light',
-  'pale linen tablecloth, white speckled ceramic plate, bright airy light',
-  'weathered dark stone counter, terracotta dish, warm golden-hour light',
-  'muted grey concrete surface, matte sage-green ceramic plate, soft overcast daylight',
+  'dark charcoal slate surface, soft side lighting',
+  'light rustic oak table, soft natural daylight',
+  'dark aged wood table, soft afternoon light',
+  'pale linen tablecloth, bright airy light',
+  'weathered stone counter, gentle window light',
+  'muted grey concrete surface, soft overcast daylight',
 ];
 
 function pickSceneVariant(seed: string): string {
@@ -36,9 +36,24 @@ export type RecipeForPrompt = {
   instructions: string;
 };
 
-// Overrides beskriver kun rettens visuelle identitet. Ingredienslisten og
-// fremgangsmåden sendes stadig med, så et override aldrig erstatter fakta.
+// These briefs are checked against the recipes. Full facts go to the reviewer;
+// generation gets a concise description of the finished food.
 const VISUAL_OVERRIDES: Record<string, string> = {
+  'aeg-i-cocotte-skinke': 'One white ceramic ramekin containing two whole baked eggs, two soft golden yolks in set whites, diced cooked ham, a little cream and melted grated parmesan. Chopped chives on top. Ramekin on an empty plate. No bread.',
+  'spidskaalswraps-roeget-laks': 'Four cut halves of two wraps made entirely from thin blanched pale green pointed cabbage leaves with visible cabbage veins. Filled with folded pink smoked salmon, white dill cream cheese and cucumber sticks. Cut ends reveal filling. Empty ceramic plate. No tortilla, bread or extra vegetables.',
+  'mandelboller-solsikkekerner': 'Two small round golden almond flour buns with sunflower seeds baked on top. One bun cut open revealing a moist dense fine crumb. Plain serving without butter, toppings or other food.',
+  'kyllingesalat-selleri-valnoedder': 'Chunky creamy chicken salad on little gem lettuce leaves: diced cooked white chicken breast, thin pale green celery slices, chopped toasted walnuts, white mayonnaise and creme fraiche dressing with tiny dried tarragon flecks. A few walnut pieces on top. No corn, tomatoes, grapes or bread.',
+  'portobellopizza-mozzarella-skinke': 'Two large brown portobello mushroom caps as pizza bases, with clearly visible thick curved mushroom edges. Thin tomato passata, short cooked pink ham strips and melted grated mozzarella with browned spots. Small side of rocket leaves. No bread, pizza dough, basil or cherry tomatoes.',
+  'citronkylling-oliven-broccoli': 'Two small roasted bone-in chicken thighs with crisp golden skin, roasted broccoli florets with browned edges and pitted green olives. A small amount of thin golden pan juices. Lemon juice and zest used in cooking, no lemon pieces on the plate. No cream sauce or extra garnish.',
+  'andebryst-roedkaal-timiansky': 'One sliced fully cooked duck breast with light brown interior, crosshatched crisp brown skin, sliced about 1 cm thick. Butter fried finely sliced purple red cabbage alongside, small pool of thin brown pan jus. No berries, mash, fresh herb sprigs or garnish.',
+  'mandelsmaakager-kanel-appelsinskal': 'Two small plain round almond cookies, one broken showing fine crumb, about 5 cm diameter and 7 mm thick. Pale golden with darker baked edges and tiny cinnamon and orange zest flecks baked into dough. No almond flakes, nuts on top, orange pieces, icing sugar or garnish.',
+  'chokoladetroefler-tahin-kakao': 'Small hand rolled slightly irregular round dark chocolate truffles thinly coated in dry cocoa powder. One cut open showing dense smooth dark chocolate ganache. Tahini blended inside is invisible. No sesame seeds, nuts, chocolate shavings or garnish.',
+  'ostevafler-uden-mel':
+    'Exactly two bare savoury cheese waffles on an otherwise empty plate. Their entire top surfaces are exposed golden-brown waffle grids with crisp lacy toasted-cheese edges. All grid pockets are empty. The waffles consist of egg and mozzarella baked together in a waffle iron. Only the two waffles are visible on the plate. Plain unadorned serving, empty tabletop.',
+  'omelet-champignon-gedeost':
+    'One folded semicircular omelette made from beaten eggs, lightly golden and tender, filled with browned sliced mushrooms and soft white goat cheese, with a little chopped parsley. The filling peeks out at the folded edge. All eggs form the omelette itself: no separate fried egg, no round yolk on top, no additional side dishes.',
+  'varm-kokosgroed-chia-kardemomme':
+    'One ceramic bowl of thick spoonable warm off-white coconut porridge, uniformly mixed with hydrated tiny black chia seeds and fine shredded coconut. One small soft white dollop of plain Greek yoghurt on top. Ground cardamom mixed in and invisible. No granola, brown topping, fruit, nuts, eggs, whole spice pods or piles of seeds or coconut on top.',
   'kokosmakroner':
     'Small golden-brown coconut macaroon mounds with a crisp toasted exterior and visible shredded coconut texture, stacked on a plate.',
   'cheesecake-i-glas':
@@ -88,8 +103,17 @@ export function recipeFactsForReview(recipe: RecipeForPrompt): string {
 // Prompten indeholder alle ingredienser og tilberedningen. Modellen får dermed
 // både råvarerne og den færdige form i stedet for kun fire løsrevne ord.
 export function buildRecipePrompt(recipe: RecipeForPrompt): string {
+  // Older overrides were not all checked for complete visible components.
+  if (['ostevafler-uden-mel', 'omelet-champignon-gedeost', 'varm-kokosgroed-chia-kardemomme',
+    'aeg-i-cocotte-skinke', 'spidskaalswraps-roeget-laks', 'mandelboller-solsikkekerner',
+    'kyllingesalat-selleri-valnoedder', 'portobellopizza-mozzarella-skinke',
+    'citronkylling-oliven-broccoli', 'andebryst-roedkaal-timiansky',
+    'mandelsmaakager-kanel-appelsinskal', 'chokoladetroefler-tahin-kakao'].includes(recipe.slug)) {
+    return `Photograph the finished food: ${VISUAL_OVERRIDES[recipe.slug]} The serving is alone; the surrounding table is empty.`;
+  }
   return [
     `Create a photorealistic food photograph of the finished Danish keto dish "${recipe.title}".`,
+    VISUAL_OVERRIDES[recipe.slug] ? `Finished appearance: ${VISUAL_OVERRIDES[recipe.slug]}` : '',
     recipeFactsForReview(recipe),
     'Depict the cooked, finished result exactly as described. The dish type, texture and main visible components must be immediately recognisable.',
     'Do not invent food. Do not add bread, rice, pasta, potatoes, fruit, vegetables, meat, fish, sauces, herbs, garnish or toppings unless they are explicitly included in the allowed ingredient list.',
@@ -127,6 +151,8 @@ function cleanArticleText(value: string): string {
 }
 
 const ARTICLE_VISUAL_CONCEPTS: Record<string, string> = {
+  'kulhydrater-paa-keto-laes-naeringsdeklarationen': 'An adult reading the small back nutrition panel of an unbranded yoghurt tub beside a small bowl of plain yoghurt on a kitchen scale. The panel is blurred and unreadable, with no legible figures or claims. This illustrates checking a food label and weighing a portion, not a nutritional recommendation. Quiet kitchen, no extra food props.',
+  'hvad-spiser-man-paa-keto-enkle-maaltider': 'One realistic everyday dinner plate with sliced cooked chicken breast, green broccoli, a modest serving of avocado and a little olive oil. Natural Danish home dining table, plain ceramic plate, no special diet products, no excessive butter, no health symbols or text.',
   'ketose-saadan-virker-det': 'Close-up product photograph: a small handheld blood ketone testing meter with a completely blank dark display, next to two narrow unmarked test strips, isolated on a seamless pale grey studio surface. Exactly these three objects and nothing else. Empty background. No cutlery, fabric, table setting, food, letters, logos, blood or needles. A neutral illustration of measurement equipment, with no medical results shown.',
   'start-paa-keto-kold-tyrker-eller-gradvis': 'An everyday kitchen counter showing preparation for a dietary change: a CLOSED notebook with a plain unmarked beige cover and a shopping basket containing recognisable eggs, avocado and leafy greens. The notebook has no visible pages, lettering, label or logo. No plated meal. The subject is shopping and practical preparation for a new eating routine.',
   'faste-typer-maaltider-og-laengere-faste': 'A simple empty ceramic dinner plate beside a clear glass of water and an analogue clock with plain tick marks and no numerals. Calm morning light on a dining table. No food. The empty place setting and clock together symbolise an eating window and a pause between meals.',

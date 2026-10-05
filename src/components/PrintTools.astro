@@ -1,0 +1,33 @@
+<div class="print-tools">
+  <button type="button" data-print-page>
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6z" /></svg>
+    Print
+  </button>
+  <span data-print-status role="status"></span>
+</div>
+<script>
+  const button = document.querySelector<HTMLButtonElement>('[data-print-page]');
+  button?.addEventListener('click', async () => {
+    button.disabled = true;
+    const status = document.querySelector<HTMLElement>('[data-print-status]');
+    if (status) status.textContent = 'Gør udskriften klar …';
+    // Load article images below the fold before opening the print preview.
+    const images = Array.from(document.querySelectorAll<HTMLImageElement>('.page-main img'));
+    images.forEach((image) => { image.loading = 'eager'; });
+    await Promise.race([
+      Promise.allSettled([document.fonts.ready, ...images.map((image) => image.decode())]),
+      new Promise((resolve) => setTimeout(resolve, 6000)),
+    ]);
+    if (status) status.textContent = '';
+    button.disabled = false;
+    window.print();
+  });
+</script>
+<style>
+  .print-tools { display: flex; align-items: center; gap: .8rem; margin-bottom: 1.2rem; }
+  button { display: inline-flex; align-items: center; gap: .55rem; border: 1px solid var(--ink); border-radius: 999px; padding: .65rem 1.2rem; color: var(--ink); background: transparent; font: inherit; font-weight: 600; cursor: pointer; }
+  button:hover { background: var(--paper-light); }
+  button:focus-visible { outline: 3px solid var(--rust); outline-offset: 3px; }
+  button:disabled { opacity: .6; cursor: wait; }
+  [data-print-status] { font-size: .85rem; }
+</style>
